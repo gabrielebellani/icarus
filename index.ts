@@ -9,8 +9,9 @@ const server = Bun.serve({
         "/api/status": new Response("OK"),
         '/api/init': {
             "GET": (request) => getInstallationInitRequired(request),
-            "POST": async (request) => await initInstallation(request)
+            "POST": async (request) => await initInstallation(request),
         },
+        // '/api/config': (request) => getUserConfig(request),
         '/*': new Response("Not found", {status: 404}),
     },
 })

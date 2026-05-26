@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_pE7RgHyotK
 createdAt: 2026-05-26T17:52:58.677140
-updatedAt: 2026-05-26T20:25:04.949864
+updatedAt: 2026-05-26T21:14:55.951901
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -11,6 +11,7 @@ body:
   text: |-
     {
       "username": "admin",
+      "password": "Test-Safe-2026-Password",
       "openSkyNetworkKey": "",
       "coordinates": {
         "latitude": 45.00,

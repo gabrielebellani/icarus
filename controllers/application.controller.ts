@@ -7,6 +7,7 @@ export async function initInstallation(request: Request): Promise<Response> {
 
     const initValidationSchema = z.object({
         username: z.string().min(4).max(255),
+        password: z.string().min(12).max(255),
         openSkyNetworkKey: z.string().optional(),
         coordinates: z.object({
             latitude: z.number(),
@@ -30,15 +31,9 @@ export async function initInstallation(request: Request): Promise<Response> {
         return new Response("This installation is already initialized", {status: 409})
     }
 
-    const userExists = db
-        .prepare('SELECT COUNT(*) as already_exists FROM users where username = ?', [validated.username])
-        .get() as {already_exists: number}
-    if (userExists.already_exists > 0) {
-        return new Response("User already exists", {status: 400})
-    }
-
-    //create the user
-    db.prepare('INSERT INTO users (username) VALUES (?)').run(validated.username)
+    //create the superuser
+    const passwordHash = await Bun.password.hash(validated.password)
+    db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(validated.username, passwordHash)
     const user = db.prepare('SELECT id FROM users WHERE username = ?', [validated.username]).get() as { id: number }
 
     const valuesToInitialize = [
