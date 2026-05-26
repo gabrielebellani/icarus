@@ -1,0 +1,17 @@
+type: workspace
+model: workspace
+id: wk_gdGiKSysPR
+createdAt: 2026-05-26T17:48:32.318674
+updatedAt: 2026-05-26T17:49:28.273047
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Icarus
+encryptionKeyChallenge: null
+settingValidateCertificates: true
+settingFollowRedirects: true
+settingRequestTimeout: 0
+settingDnsOverrides: []
+settingSendCookies: false
+settingStoreCookies: false

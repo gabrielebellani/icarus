@@ -1,10 +1,12 @@
-import { z } from 'zod';
+import {z} from 'zod';
 import {db} from "../index.ts";
+import {Preference} from "../classes/Preference.ts";
+import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 
-export function initInstallation(request: Request): null {
+export async function initInstallation(request: Request): Promise<Response> {
 
     const initValidationSchema = z.object({
-        username: z.string(),
+        username: z.string().min(4).max(255),
         openSkyNetworkKey: z.string().optional(),
         coordinates: z.object({
             latitude: z.number(),
@@ -13,12 +15,63 @@ export function initInstallation(request: Request): null {
         radius: z.number().optional(),
         display_mode: z.enum(['minimal', 'detailed']).optional()
     })
-    const validated = initValidationSchema.parse()
 
-    const count = db.prepare('SELECT COUNT(*) FROM users where username = ?', [validated.username]).get() as number
-    if(count > 0){
-        throw new Response("User already exists", {status: 400})
+    const body = await request.json();
+    const parsed = initValidationSchema.safeParse(body);
+    if (!parsed.success) {
+        return new Response(JSON.stringify({errors: parsed.error.issues}), {
+            status: 422,
+            headers: {'Content-Type': 'application/json'}
+        })
+    }
+    const validated = parsed.data
+
+    if(getIsInstallationAlreadyInitialized()){
+        return new Response("This installation is already initialized", {status: 409})
     }
 
-    return null
+    const userExists = db
+        .prepare('SELECT COUNT(*) as already_exists FROM users where username = ?', [validated.username])
+        .get() as {already_exists: number}
+    if (userExists.already_exists > 0) {
+        return new Response("User already exists", {status: 400})
+    }
+
+    //create the user
+    db.prepare('INSERT INTO users (username) VALUES (?)').run(validated.username)
+    const user = db.prepare('SELECT id FROM users WHERE username = ?', [validated.username]).get() as { id: number }
+
+    const valuesToInitialize = [
+        new Preference(user.id, PreferenceKeyEnum.SUPERUSER, true),
+        new Preference(user.id, PreferenceKeyEnum.OPEN_SKY_API_KEY, validated.openSkyNetworkKey),
+        new Preference(user.id, PreferenceKeyEnum.COORDINATES, JSON.stringify(validated.coordinates)),
+        new Preference(user.id, PreferenceKeyEnum.RADIUS, validated.radius),
+        new Preference(user.id, PreferenceKeyEnum.DEFAULT_DISPLAY_MODE, validated.display_mode),
+    ]
+
+    // Bulk insert in a single query
+    const placeholders = valuesToInitialize.map(() => '(?, ?, ?)').join(', ')
+    const params: any[] = []
+    for (const pref of valuesToInitialize) {
+        const valueToStore = pref.value === undefined || pref.value === '' ? null : pref.value
+        params.push(pref.user_id, pref.key, valueToStore)
+    }
+    db.prepare(`INSERT INTO preferences (user_id, key, value)
+                VALUES ${placeholders}`).run(...params)
+
+    return new Response("Installation initialized", {status: 200})
+}
+
+export function getInstallationInitRequired(request: Request): Response{
+    return Response.json({
+        "required": !getIsInstallationAlreadyInitialized()
+    })
+}
+
+function getIsInstallationAlreadyInitialized(){
+    const isAlreadyInitialized = db
+        .query('SELECT COUNT(*) as initialized FROM preferences WHERE key = ? AND value = ?')
+        .get(PreferenceKeyEnum.SUPERUSER, true) as {initialized: number}
+
+    return !!isAlreadyInitialized.initialized
 }

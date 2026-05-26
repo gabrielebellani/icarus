@@ -1,5 +1,5 @@
 import {Database} from "bun:sqlite";
-import {initInstallation} from "./controllers/application.controller.ts";
+import {getInstallationInitRequired, initInstallation} from "./controllers/application.controller.ts";
 
 export const db = new Database('icarus-db.sqlite')
 
@@ -8,7 +8,8 @@ const server = Bun.serve({
     routes: {
         "/api/status": new Response("OK"),
         '/api/init': {
-            "POST": async (request) => new Response(initInstallation(request))
+            "GET": (request) => getInstallationInitRequired(request),
+            "POST": async (request) => await initInstallation(request)
         },
         '/*': new Response("Not found", {status: 404}),
     },

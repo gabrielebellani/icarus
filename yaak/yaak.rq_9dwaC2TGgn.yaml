@@ -1,0 +1,44 @@
+type: http_request
+model: http_request
+id: rq_9dwaC2TGgn
+createdAt: 2026-05-26T20:42:58.662731
+updatedAt: 2026-05-26T20:43:18.376720
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "username": "admin",
+      "openSkyNetworkKey": "",
+      "coordinates": {
+        "latitude": 45.00,
+        "longitude": 45.00
+      },
+      "radius": 50,
+      "display_mode": "minimal"
+    }
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Is installation init required
+sortPriority: -1779817978671.999
+url: ${[ host ]}/api/init
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
