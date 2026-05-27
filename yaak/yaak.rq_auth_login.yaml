@@ -1,0 +1,42 @@
+type: http_request
+model: http_request
+id: rq_auth_login
+createdAt: 2026-05-27T00:00:00.000000
+updatedAt: 2026-05-27T00:00:00.000000
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "username": "johndoe",
+      "password": "MySecurePassword123!"
+    }
+bodyType: application/json
+description: 'Login. Torna access_token (30gg, HS512) e refresh_token (90gg).'
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: hdr_login_ct
+method: POST
+name: Login
+sortPriority: 2.0
+url: ${[ host ]}/api/auth/login
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

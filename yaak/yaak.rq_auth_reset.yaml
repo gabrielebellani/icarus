@@ -1,0 +1,42 @@
+type: http_request
+model: http_request
+id: rq_auth_reset
+createdAt: 2026-05-27T00:00:00.000000
+updatedAt: 2026-05-27T00:00:00.000000
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "token": "<token ricevuto dal recovery>",
+      "new_password": "NuovaPasswordSicura123!"
+    }
+bodyType: application/json
+description: 'Reimposta la password usando il token di recovery (valido 1 ora). Invalida tutti i refresh token attivi dell utente.'
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: hdr_reset_ct
+method: POST
+name: Password Reset
+sortPriority: 6.0
+url: ${[ host ]}/api/auth/reset
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

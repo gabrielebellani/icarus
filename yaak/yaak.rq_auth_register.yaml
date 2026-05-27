@@ -1,0 +1,42 @@
+type: http_request
+model: http_request
+id: rq_auth_register
+createdAt: 2026-05-27T00:00:00.000000
+updatedAt: 2026-05-27T00:00:00.000000
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "username": "johndoe",
+      "password": "MySecurePassword123!"
+    }
+bodyType: application/json
+description: 'Registra un nuovo utente. Torna access_token e refresh_token. Bloccato se disable_registration=true.'
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: hdr_register_ct
+method: POST
+name: Register
+sortPriority: 1.0
+url: ${[ host ]}/api/auth/register
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

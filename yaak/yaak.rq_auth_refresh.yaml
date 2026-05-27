@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_auth_refresh
+createdAt: 2026-05-27T00:00:00.000000
+updatedAt: 2026-05-27T00:00:00.000000
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "refresh_token": "<incolla qui il refresh_token>"
+    }
+bodyType: application/json
+description: 'Rinnova access_token e refresh_token. Il vecchio refresh_token è invalidato dalla sua scadenza JWT.'
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: hdr_refresh_ct
+method: POST
+name: Refresh Token
+sortPriority: 3.0
+url: ${[ host ]}/api/auth/refresh
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
