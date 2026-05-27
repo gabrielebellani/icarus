@@ -108,16 +108,16 @@ export async function initUser(request: Request): Promise<Response> {
 
     const { openSkyNetworkKey, coordinates, radius, display_mode } = parsed.data;
 
-    const prefsToInsert: [number, string, string | null][] = [
-        [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKey ?? null],
+    const preferencesToInsert: [number, string, string | null][] = [
+        [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKey ? openSkyNetworkKey.length > 0 ? openSkyNetworkKey : null : null],
         [userId, PreferenceKeyEnum.COORDINATES, coordinates ? JSON.stringify(coordinates) : null],
         [userId, PreferenceKeyEnum.RADIUS, radius != null ? String(radius) : null],
         [userId, PreferenceKeyEnum.DEFAULT_DISPLAY_MODE, display_mode ?? null],
         [userId, PreferenceKeyEnum.INITIALIZED, 'true'],
     ];
 
-    const placeholders = prefsToInsert.map(() => '(?, ?, ?)').join(', ');
-    const params: (number | string | null)[] = prefsToInsert.flat();
+    const placeholders = preferencesToInsert.map(() => '(?, ?, ?)').join(', ');
+    const params: (number | string | null)[] = preferencesToInsert.flat();
     db.prepare(`INSERT OR IGNORE INTO preferences (user_id, key, value) VALUES ${placeholders}`).run(...params);
 
     return jsonResponse({ message: 'User initialized' }, 200);
