@@ -75,6 +75,17 @@ const initUserSchema = z.object({
     display_mode: z.enum(['minimal', 'detailed']).optional(),
 });
 
+export async function userRequiresInit(request: Request): Promise<Response> {
+    const auth = await authenticate(request)
+    if(isAuthError(auth)) return auth;
+
+    const userId = auth.user_id
+    const initializedPreferenceExists = db.query("SELECT COUNT(*) initialized FROM preferences WHERE user_id = ? AND key = ?")
+        .get(userId, PreferenceKeyEnum.INITIALIZED) as {initialized: number}
+
+    return jsonResponse(!initializedPreferenceExists.initialized)
+}
+
 export async function initUser(request: Request): Promise<Response> {
     const auth = await authenticate(request);
     if (isAuthError(auth)) return auth;

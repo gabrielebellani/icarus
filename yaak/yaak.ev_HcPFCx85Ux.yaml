@@ -3,7 +3,7 @@ model: environment
 id: ev_HcPFCx85Ux
 workspaceId: wk_gdGiKSysPR
 createdAt: 2026-05-26T17:53:20.344039
-updatedAt: 2026-05-27T05:37:13.457848
+updatedAt: 2026-05-27T06:15:07.069801
 name: Local
 public: true
 base: false
@@ -16,7 +16,7 @@ variables:
   id: 6XG4ZItYKj
 - enabled: true
   name: access_token
-  value: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoic3VwZXJ1c2VyIiwiaWF0IjoxNzc5ODU5NjUzLCJleHAiOjE3ODI0NTE2NTN9.g6A-wSDGkDXWTbXBu7DFYYJZy78LiQXMFXiKAj6rneJlIOE6P5ZHVoBQrXcHacOtlt88Qbb90TjVL0GgXK73Hw
+  value: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoidXNlciIsImlhdCI6MTc3OTg2MTExNywiZXhwIjoxNzgyNDUzMTE3fQ.pq8Y0VGTpVl5ui1hUuBBpRk9WH5j2Ml9FkIWOnV6HTDKEeOP0tBi6Vd7QgfE21ClBga6UGG1GIhTW8H01RZKAA
   id: 2hBZsabGmz
 - enabled: true
   name: refresh_token

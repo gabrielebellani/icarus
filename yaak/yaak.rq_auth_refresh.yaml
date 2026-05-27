@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_auth_refresh
 createdAt: 2026-05-27T00:00:00
-updatedAt: 2026-05-27T05:29:32.009864
+updatedAt: 2026-05-27T05:57:01.780172
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 body:
   text: |-
     {
-      "refresh_token": "<incolla qui il refresh_token>"
+      "refresh_token": "${[ refresh_token ]}"
     }
 bodyType: application/json
 description: Returns a new access_token and refresh_token. The old token refresh_token is invalided once it expires.

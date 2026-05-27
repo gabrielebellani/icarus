@@ -1,7 +1,15 @@
 import { Database } from 'bun:sqlite';
 import runMigrations from './migrations/migrations.ts';
 import { bootstrapSuperuser } from './controllers/application.controller.ts';
-import { initUser, registerUser, loginUser, refreshAccessToken, requestPasswordRecovery, resetPassword } from './controllers/auth.controller.ts';
+import {
+    initUser,
+    registerUser,
+    loginUser,
+    refreshAccessToken,
+    requestPasswordRecovery,
+    resetPassword,
+    userRequiresInit
+} from './controllers/auth.controller.ts';
 
 export const db = new Database('./icarus-db.sqlite', { create: true });
 
@@ -11,11 +19,12 @@ await runMigrations();
 // Inizializza superuser da env
 await bootstrapSuperuser();
 
-const server = Bun.serve({
+Bun.serve({
     port: "3465",
     routes: {
         "/api/status": new Response("OK"),
         '/api/auth/init': {
+            "GET": async (request) => await userRequiresInit(request),
             "POST": async (request) => await initUser(request),
         },
         '/api/auth/register': {
