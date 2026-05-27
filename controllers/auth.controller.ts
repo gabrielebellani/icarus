@@ -4,6 +4,7 @@ import { PreferenceKeyEnum } from '../enums/PreferenceKeyEnum.ts';
 import { signAccessToken, signRefreshToken, verifyToken, type TokenPayload } from '../utils/jwt.ts';
 import { jsonResponse } from '../utils/response.ts';
 import { authenticate, isAuthError } from '../middleware/auth.ts';
+import {env} from "../utils/env.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,8 @@ async function issueTokenPair(userId: number): Promise<{ access_token: string; r
 
 const registerSchema = z.object({
     username: z.string().min(4).max(255),
-    password: z.string().min(12).max(255),
+    password: z.string().min(8).max(255),
+    email: z.email()
 });
 
 export async function registerUser(request: Request): Promise<Response> {
@@ -37,7 +39,7 @@ export async function registerUser(request: Request): Promise<Response> {
     if (!parsed.success) {
         return jsonResponse({ errors: parsed.error.issues }, 422);
     }
-    const { username, password } = parsed.data;
+    const { username, password, email } = parsed.data;
 
     // Controlla se la registrazione è disabilitata (preference del superuser, user_id=1)
     const disabledPref = db
@@ -54,7 +56,7 @@ export async function registerUser(request: Request): Promise<Response> {
     }
 
     const passwordHash = await Bun.password.hash(password);
-    db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username, passwordHash);
+    db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)').run(username, passwordHash, email);
     const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username) as { id: number };
 
     const tokens = await issueTokenPair(user.id);
@@ -182,7 +184,7 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
     }
     const { username } = parsed.data;
 
-    const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username) as { id: number } | null;
+    const user = db.prepare('SELECT id FROM users WHERE username = ? AND username <> ?').get(username, env.SUPERUSER_USERNAME) as { id: number } | null;
 
     if (user) {
         const token = crypto.randomUUID();
@@ -194,6 +196,8 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
         console.log(`[recovery] Token per "${username}": ${token}`);
     }
 
+    console.log(user)
+
     return jsonResponse({ message: 'If the user exists, a recovery token has been issued' }, 200);
 }
 
@@ -201,7 +205,7 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
 
 const resetSchema = z.object({
     token: z.string(),
-    new_password: z.string().min(12).max(255),
+    new_password: z.string().min(8).max(255),
 });
 
 export async function resetPassword(request: Request): Promise<Response> {

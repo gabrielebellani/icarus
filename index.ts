@@ -30,6 +30,9 @@ const server = Bun.serve({
         '/api/auth/recovery': {
             "POST": async (request) => await requestPasswordRecovery(request),
         },
+        '/api/auth/reset': {
+            "POST": async (request) => await resetPassword(request),
+        },
         // '/api/config': (request) => getUserConfig(request),
         '/*': new Response("Not found", {status: 404}),
     },

@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_auth_register
 createdAt: 2026-05-27T00:00:00
-updatedAt: 2026-05-27T05:35:43.056667
+updatedAt: 2026-05-27T05:38:39.173049
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -11,7 +11,8 @@ body:
   text: |-
     {
       "username": "johndoe",
-      "password": "MySecurePassword123!"
+      "email": "john.doe@example.com",
+      "password": "MySecurePassword123!",
     }
 bodyType: application/json
 description: "Register a new user. Returns access_token and refresh_token. \nReturns 403 if env disable_registration is true.\nReturns 409 if provided username already exists."
