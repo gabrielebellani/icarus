@@ -3,7 +3,7 @@ model: environment
 id: ev_HcPFCx85Ux
 workspaceId: wk_gdGiKSysPR
 createdAt: 2026-05-26T17:53:20.344039
-updatedAt: 2026-05-26T17:58:34.123341
+updatedAt: 2026-05-27T05:37:13.457848
 name: Local
 public: true
 base: false
@@ -14,5 +14,13 @@ variables:
   name: host
   value: http://localhost:3465
   id: 6XG4ZItYKj
+- enabled: true
+  name: access_token
+  value: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoic3VwZXJ1c2VyIiwiaWF0IjoxNzc5ODU5NjUzLCJleHAiOjE3ODI0NTE2NTN9.g6A-wSDGkDXWTbXBu7DFYYJZy78LiQXMFXiKAj6rneJlIOE6P5ZHVoBQrXcHacOtlt88Qbb90TjVL0GgXK73Hw
+  id: 2hBZsabGmz
+- enabled: true
+  name: refresh_token
+  value: eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoic3VwZXJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3Nzk4NTk2NTMsImV4cCI6MTc4NzYzNTY1M30.L3jofK6Di0qBalfauvcvfiMwfdu1ktUMMF1-3CbjBLoUTK-W2OXnW86d70e1nf_I2pC9u42lAzbSedm-iq06Kg
+  id: 6F3ncV7msD
 color: var(--success)
 sortPriority: 0.0

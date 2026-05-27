@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_init_user
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:30:35.454802
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -19,7 +19,7 @@ body:
       "display_mode": "minimal"
     }
 bodyType: application/json
-description: 'Primo accesso: salva le preference utente (coordinates, radius, ecc.). Richiede Authorization: Bearer <access_token>. Eseguire una sola volta per utente.'
+description: 'First login: stores user preferences (coordinates, radius, ecc.). Requires Authorization: Bearer <access_token>. Can be used only once per user.'
 headers:
 - enabled: true
   name: Content-Type

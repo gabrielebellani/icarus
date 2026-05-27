@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_reset
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:33:48.617032
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -14,7 +14,7 @@ body:
       "new_password": "NuovaPasswordSicura123!"
     }
 bodyType: application/json
-description: 'Reimposta la password usando il token di recovery (valido 1 ora). Invalida tutti i refresh token attivi dell utente.'
+description: Resets the password using the recovery token (1 hour validity).
 headers:
 - enabled: true
   name: Content-Type

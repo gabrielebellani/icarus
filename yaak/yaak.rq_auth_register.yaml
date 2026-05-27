@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_register
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:35:43.056667
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -14,7 +14,7 @@ body:
       "password": "MySecurePassword123!"
     }
 bodyType: application/json
-description: 'Registra un nuovo utente. Torna access_token e refresh_token. Bloccato se disable_registration=true.'
+description: "Register a new user. Returns access_token and refresh_token. \nReturns 403 if env disable_registration is true.\nReturns 409 if provided username already exists."
 headers:
 - enabled: true
   name: Content-Type

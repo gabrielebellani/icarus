@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_login
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:28:37.900656
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,11 +10,11 @@ authenticationType: null
 body:
   text: |-
     {
-      "username": "johndoe",
-      "password": "MySecurePassword123!"
+      "username": "admin",
+      "password": "Test-Safe-2026-Password"
     }
 bodyType: application/json
-description: 'Login. Torna access_token (30gg, HS512) e refresh_token (90gg).'
+description: Login. Returns access_token (30gg, HS512) and refresh_token (90gg).
 headers:
 - enabled: true
   name: Content-Type

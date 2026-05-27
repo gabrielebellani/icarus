@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_recovery
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:33:18.650265
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -13,7 +13,7 @@ body:
       "username": "johndoe"
     }
 bodyType: application/json
-description: 'Richiede il reset della password. Il token viene loggato su console (in futuro via email). Risposta identica indipendentemente dall esistenza dell utente (anti-enumeration).'
+description: Request password reset. Token is logged in console (soon sent via email).
 headers:
 - enabled: true
   name: Content-Type

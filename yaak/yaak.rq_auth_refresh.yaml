@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
 id: rq_auth_refresh
-createdAt: 2026-05-27T00:00:00.000000
-updatedAt: 2026-05-27T00:00:00.000000
+createdAt: 2026-05-27T00:00:00
+updatedAt: 2026-05-27T05:29:32.009864
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -13,7 +13,7 @@ body:
       "refresh_token": "<incolla qui il refresh_token>"
     }
 bodyType: application/json
-description: 'Rinnova access_token e refresh_token. Il vecchio refresh_token è invalidato dalla sua scadenza JWT.'
+description: Returns a new access_token and refresh_token. The old token refresh_token is invalided once it expires.
 headers:
 - enabled: true
   name: Content-Type
