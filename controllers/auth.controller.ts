@@ -72,7 +72,7 @@ const initUserSchema = z.object({
         longitude: z.number(),
     }).optional(),
     radius: z.number().optional(),
-    display_mode: z.enum(['minimal', 'detailed']).optional(),
+    display_mode: z.enum(['minimal', 'detailed', 'flight', 'airport']).optional(),
 });
 
 export async function userRequiresInit(request: Request): Promise<Response> {

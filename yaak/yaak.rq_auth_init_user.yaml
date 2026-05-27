@@ -2,9 +2,9 @@ type: http_request
 model: http_request
 id: rq_auth_init_user
 createdAt: 2026-05-27T00:00:00
-updatedAt: 2026-05-27T06:16:10.919241
+updatedAt: 2026-05-27T09:53:57.787893
 workspaceId: wk_gdGiKSysPR
-folderId: null
+folderId: fl_9k7giAajhX
 authentication:
   token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R0tUWVdtVXBIOUVDM25PNWUvRHYvUXdSVEV6ZHBNNGIramdaei9SREt0OWh3dHNYeUY0SEpuTDJzL1ZyK3NDZGV4QlU4eldiUDk2NlB1bHc9PQ') ]}
 authenticationType: bearer
@@ -32,7 +32,7 @@ headers:
   id: w93Nj5xNjY
 method: POST
 name: Init User (first login)
-sortPriority: 4.0
+sortPriority: 3000.0
 url: ${[ host ]}/api/auth/init
 urlParameters: []
 settingSendCookies:

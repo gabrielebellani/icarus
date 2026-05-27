@@ -13,6 +13,7 @@
     "migrate": "bun migrations/migrations.ts"
   },
   "dependencies": {
+    "date-fns": "^4.3.0",
     "jose": "^6.2.3",
     "zod": "^4.0.0"
   }

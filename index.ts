@@ -11,6 +11,7 @@ import {
     userRequiresInit
 } from './controllers/auth.controller.ts';
 import {getUserPreferences} from "./controllers/preferences.controller.ts";
+import {trackFlight} from "./controllers/flight.controller.ts";
 
 export const db = new Database('./icarus-db.sqlite', { create: true });
 
@@ -45,6 +46,9 @@ Bun.serve({
         },
         '/api/preferences': {
             "GET": async (request) => await getUserPreferences(request),
+        },
+        '/api/flight': {
+            "POST": async (request) => await trackFlight(request),
         },
         '/*': new Response("Not found", {status: 404}),
     },

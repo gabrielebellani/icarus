@@ -2,9 +2,9 @@ type: http_request
 model: http_request
 id: rq_auth_register
 createdAt: 2026-05-27T00:00:00
-updatedAt: 2026-05-27T05:38:39.173049
+updatedAt: 2026-05-27T09:53:57.778516
 workspaceId: wk_gdGiKSysPR
-folderId: null
+folderId: fl_9k7giAajhX
 authentication: {}
 authenticationType: null
 body:
@@ -23,7 +23,7 @@ headers:
   id: hdr_register_ct
 method: POST
 name: Register
-sortPriority: 1.0
+sortPriority: 0.0
 url: ${[ host ]}/api/auth/register
 urlParameters: []
 settingSendCookies:
