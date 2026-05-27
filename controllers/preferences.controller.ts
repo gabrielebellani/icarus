@@ -1,6 +1,7 @@
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {db} from "../index.ts";
 import {Preference} from "../classes/Preference.ts";
+import {jsonResponse} from "../utils/response.ts";
 
 export async function getUserPreferences(request: Request) {
     const auth = await authenticate(request);
@@ -11,5 +12,5 @@ export async function getUserPreferences(request: Request) {
     const rawPreferences = db.query("SELECT * FROM preferences WHERE user_id = ?")
         .all(userId)
 
-    return Preference.fromDBBulk(rawPreferences)
+    return jsonResponse(Preference.fromDBBulk(rawPreferences))
 }

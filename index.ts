@@ -10,6 +10,7 @@ import {
     resetPassword,
     userRequiresInit
 } from './controllers/auth.controller.ts';
+import {getUserPreferences} from "./controllers/preferences.controller.ts";
 
 export const db = new Database('./icarus-db.sqlite', { create: true });
 
@@ -42,7 +43,9 @@ Bun.serve({
         '/api/auth/reset': {
             "POST": async (request) => await resetPassword(request),
         },
-        // '/api/config': (request) => getUserConfig(request),
+        '/api/preferences': {
+            "GET": async (request) => await getUserPreferences(request),
+        },
         '/*': new Response("Not found", {status: 404}),
     },
 })
