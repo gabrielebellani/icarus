@@ -5,6 +5,7 @@ import { signAccessToken, signRefreshToken, verifyToken, type TokenPayload } fro
 import { jsonResponse } from '../utils/response.ts';
 import { authenticate, isAuthError } from '../middleware/auth.ts';
 import {env} from "../utils/env.ts";
+import {getPreference} from "./preferences.controller.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -42,10 +43,8 @@ export async function registerUser(request: Request): Promise<Response> {
     const { username, password, email } = parsed.data;
 
     // Controlla se la registrazione è disabilitata (preference del superuser, user_id=1)
-    const disabledPref = db
-        .prepare("SELECT value FROM preferences WHERE user_id = 1 AND key = ?")
-        .get(PreferenceKeyEnum.DISABLE_REGISTRATION) as { value: string } | null;
-    if (disabledPref?.value === 'true') {
+    const disabledPref = getPreference(PreferenceKeyEnum.DISABLE_REGISTRATION, 1)
+    if (disabledPref !== null && disabledPref.value) {
         return jsonResponse({ error: 'Registration is disabled' }, 403);
     }
 
@@ -65,6 +64,19 @@ export async function registerUser(request: Request): Promise<Response> {
 
 // ─── Init User (primo accesso) ────────────────────────────────────────────────
 
+export async function userRequiresInit(request: Request): Promise<Response> {
+    const auth = await authenticate(request)
+    if(isAuthError(auth)) return auth;
+
+    const userId = auth.user_id
+    const initializedPreferenceExists = db.query("SELECT COUNT(*) initialized FROM preferences WHERE user_id = ? AND key = ?")
+        .get(userId, PreferenceKeyEnum.INITIALIZED) as {initialized: number}
+
+    return jsonResponse({
+    requires_initialization: !initializedPreferenceExists.initialized
+})
+}
+
 const initUserSchema = z.object({
     openSkyNetworkKey: z.string().optional(),
     coordinates: z.object({
@@ -74,17 +86,6 @@ const initUserSchema = z.object({
     radius: z.number().optional(),
     display_mode: z.enum(['minimal', 'detailed', 'flight', 'airport']).optional(),
 });
-
-export async function userRequiresInit(request: Request): Promise<Response> {
-    const auth = await authenticate(request)
-    if(isAuthError(auth)) return auth;
-
-    const userId = auth.user_id
-    const initializedPreferenceExists = db.query("SELECT COUNT(*) initialized FROM preferences WHERE user_id = ? AND key = ?")
-        .get(userId, PreferenceKeyEnum.INITIALIZED) as {initialized: number}
-
-    return jsonResponse(!initializedPreferenceExists.initialized)
-}
 
 export async function initUser(request: Request): Promise<Response> {
     const auth = await authenticate(request);
@@ -96,7 +97,6 @@ export async function initUser(request: Request): Promise<Response> {
     if (!parsed.success) {
         return jsonResponse({ errors: parsed.error.issues }, 422);
     }
-
 
     // Controlla se già inizializzato
     const alreadyInit = db

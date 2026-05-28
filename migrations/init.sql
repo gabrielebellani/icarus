@@ -9,10 +9,19 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS preferences (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
     key VARCHAR(255) NOT NULL,
     value TEXT,
     UNIQUE(user_id, key),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS tracked_flights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    iata_code VARCHAR(16) NULL,
+    icao_code VARCHAR(16) NULL,
+    reference_date TEXT NOT NULL,
+    payload NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

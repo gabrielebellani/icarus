@@ -1,6 +1,8 @@
 import {db} from "../index.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {env} from "../utils/env.ts";
+import {jsonResponse} from "../utils/response.ts";
+import {getAppPreference, getPreference} from "./preferences.controller.ts";
 
 export async function bootstrapSuperuser(): Promise<void> {
     const username = env.SUPERUSER_USERNAME;
@@ -23,4 +25,11 @@ export async function bootstrapSuperuser(): Promise<void> {
         }
         db.prepare('INSERT OR IGNORE INTO preferences (user_id, key, value) VALUES (?, ?, ?)').run(existing.id, PreferenceKeyEnum.SUPERUSER, 'true');
     }
+}
+
+export function getApplicationPublicConfig(request: Request){
+    const registrationDisabledPref = getAppPreference(PreferenceKeyEnum.DISABLE_REGISTRATION)
+    return jsonResponse({
+        "registration_disabled": registrationDisabledPref ? registrationDisabledPref.value as boolean : false
+    })
 }

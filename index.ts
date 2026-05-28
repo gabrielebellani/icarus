@@ -1,6 +1,6 @@
-import { Database } from 'bun:sqlite';
+import {Database} from 'bun:sqlite';
 import runMigrations from './migrations/migrations.ts';
-import { bootstrapSuperuser } from './controllers/application.controller.ts';
+import {bootstrapSuperuser, getApplicationPublicConfig} from './controllers/application.controller.ts';
 import {
     initUser,
     registerUser,
@@ -11,9 +11,9 @@ import {
     userRequiresInit
 } from './controllers/auth.controller.ts';
 import {getUserPreferences} from "./controllers/preferences.controller.ts";
-import {trackFlight} from "./controllers/flight.controller.ts";
+import {getTrackingFlight, searchFlight, startTracking, terminateTracking} from "./controllers/flight.controller.ts";
 
-export const db = new Database('./icarus-db.sqlite', { create: true });
+export const db = new Database('./icarus-db.sqlite', {create: true});
 
 // Esegui migrazioni
 await runMigrations();
@@ -25,6 +25,7 @@ Bun.serve({
     port: "3465",
     routes: {
         "/api/status": new Response("OK"),
+        '/api/config': (request) => getApplicationPublicConfig(request),
         '/api/auth/init': {
             "GET": async (request) => await userRequiresInit(request),
             "POST": async (request) => await initUser(request),
@@ -48,7 +49,12 @@ Bun.serve({
             "GET": async (request) => await getUserPreferences(request),
         },
         '/api/flight': {
-            "POST": async (request) => await trackFlight(request),
+            "GET": async (request) => await searchFlight(request),
+        },
+        '/api/flight/tracking': {
+            "GET": async (request) => await getTrackingFlight(request),
+            "POST": async (request) => await startTracking(request),
+            "DELETE": async (request) => await terminateTracking(request)
         },
         '/*': new Response("Not found", {status: 404}),
     },

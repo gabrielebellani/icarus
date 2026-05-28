@@ -2,7 +2,7 @@ type: folder
 model: folder
 id: fl_2ss5uAFE8U
 createdAt: 2026-05-27T09:54:19.495862
-updatedAt: 2026-05-27T09:54:19.495863
+updatedAt: 2026-05-27T19:52:23.317362
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 description: ''
 headers: []
 name: Preferences
-sortPriority: -1779875659492.0
+sortPriority: 1000.0
 settingSendCookies:
   enabled: false
   value: true
