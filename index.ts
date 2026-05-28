@@ -12,7 +12,12 @@ import {
 } from './controllers/auth.controller.ts';
 import {getUserPreferences} from "./controllers/preferences.controller.ts";
 import {getTrackingFlight, searchFlight, startTracking, terminateTracking} from "./controllers/flight.controller.ts";
-import {getTrackingAirports, searchAirport} from "./controllers/airport.controller.ts";
+import {
+    getTrackingAirports,
+    searchAirport,
+    terminateTracking as terminateTrackingAirport,
+    updateTracking
+} from "./controllers/airport.controller.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
 
@@ -63,7 +68,10 @@ Bun.serve({
         '/api/airport/tracking': {
             "GET": async (request) => await getTrackingAirports(request),
             "POST": async (request) => await startTracking(request),
-            "DELETE": async (request) => await terminateTracking(request)
+        },
+        '/api/airport/tracking/:id': {
+            "DELETE": async (request) => await terminateTrackingAirport(request, Number(request.params.id)),
+            "PATCH": async (request) => await updateTracking(request, Number(request.params.id)),
         },
         '/*': new Response("Not found", {status: 404}),
     },

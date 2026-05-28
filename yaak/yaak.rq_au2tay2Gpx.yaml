@@ -1,0 +1,46 @@
+type: http_request
+model: http_request
+id: rq_au2tay2Gpx
+createdAt: 2026-05-28T21:49:39.068050
+updatedAt: 2026-05-28T21:58:34.442423
+workspaceId: wk_gdGiKSysPR
+folderId: fl_czabde5n6i
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: |-
+    {
+      "direction": "in"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: U5UXcGYzEj
+method: PATCH
+name: Update airport tracking
+sortPriority: 0.002
+url: ${[ host ]}/api/airport/tracking/1
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: 0P9RV0qFBW
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
