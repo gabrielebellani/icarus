@@ -34,7 +34,6 @@ export async function getTrackingAirports(request: Request){
 const trackAirportSchema = z.object({
     icao_code: z.string().nullable(),
     iata_code: z.string().nullable(),
-    direction: z.enum(['in', 'in_out', 'out']),
 })
 
 export async function startTracking(request: Request){
@@ -49,19 +48,19 @@ export async function startTracking(request: Request){
     }
 
     const userId = auth.user_id
-    const {icao_code, iata_code, direction} = parsed.data
+    const {icao_code, iata_code} = parsed.data
 
     const airport = getAirportByCode(icao_code ?? iata_code ?? '')
     if(!airport){
         return jsonResponse({error: "Airport not found with provided ICAO or IATA code."}, 404)
     }
 
-    if (isAirportAlreadyTracked(userId, airport.icao, airport.iata, direction).already_tracked > 0) {
-        return jsonResponse({error: "This airport is already being tracked in the same direction."}, 409)
+    if (isAirportAlreadyTracked(userId, airport.icao, airport.iata).already_tracked > 0) {
+        return jsonResponse({error: "This airport is already being tracked."}, 409)
     }
 
-    const result = db.prepare("INSERT INTO tracked_airports (user_id, icao_code, iata_code, name, city, direction, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-        .run(userId, airport.icao, airport.iata, airport.airport, airport.city, direction, airport.latitude, airport.longitude)
+    const result = db.prepare("INSERT INTO tracked_airports (user_id, icao_code, iata_code, name, city, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        .run(userId, airport.icao, airport.iata, airport.airport, airport.city, airport.latitude, airport.longitude)
 
     return jsonResponse(getTrackedAirportById(userId, result.lastInsertRowid as number))
 }
@@ -76,40 +75,8 @@ export async function terminateTracking(request: Request, id: number){
     return new Response()
 }
 
-const trackAirportUpdateSchema = z.object({
-    direction: z.enum(['in', 'in_out', 'out']),
-})
-
-export async function updateTracking(request: Request, id: number){
-    const auth = await authenticate(request)
-    if (isAuthError(auth)) return auth;
-
-    const body = await request.json();
-    const parsed = trackAirportUpdateSchema.safeParse(body);
-
-    if (!parsed.success) {
-        return jsonResponse({errors: parsed.error.issues}, 422);
-    }
-
-    const userId = auth.user_id
-    const {direction} = parsed.data
-
-    const airport = getTrackedAirportById(userId, id)
-    if(airport === null){
-        return jsonResponse({error: "Tracking not found"}, 404)
-    }
-
-    if (isAirportAlreadyTracked(userId, airport.icao_code, airport.iata_code, direction, airport.id).already_tracked > 0) {
-        return jsonResponse({error: "This airport is already being tracked in the same direction."}, 409)
-    }
-
-    db.prepare("UPDATE tracked_airports SET direction = ? WHERE user_id = ? AND id = ?")
-        .run(direction, userId, id)
-
-    return jsonResponse(getTrackedAirportById(userId, id))
-}
-
 const airportTimetableQuerySchema = z.object({
+    direction: z.enum(['in', 'out']),
     start: z.iso.datetime()
         .refine(
             (datetime) => {
@@ -151,6 +118,7 @@ export async function getAirportTimetable(request: Request, id: number){
 
     const url = new URL(request.url)
     const parsed = airportTimetableQuerySchema.safeParse({
+        direction: url.searchParams.get('direction'),
         start: url.searchParams.get('start'),
         end: url.searchParams.get('end'),
     });
@@ -179,34 +147,22 @@ export async function getAirportTimetable(request: Request, id: number){
         departures?: any[]
     } = {}
 
+    const airportCode = !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!
+    const { direction, start, end } = parsed.data
     const flightAwareService = new FlightawareService(flightAwareKey)
-    if(trackedAirport.direction === 'in_out'){
-        const timetable: any = await flightAwareService.fetchAirportTimetable(
-            !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!,
-            new Date(parsed.data.start),
-            new Date(parsed.data.end)
-        )
 
-        responseData.arrivals = [
-            ...timetable.arrivals,
-            ...timetable.scheduled_arrivals
-        ].sort((a: any, b: any) => new Date(a.scheduled_in).getTime() - new Date(b.scheduled_in).getTime())
-        responseData.departures = [
-            ...timetable.departures,
-            ...timetable.scheduled_departures
-        ].sort((a: any, b: any) => new Date(a.scheduled_out).getTime() - new Date(b.scheduled_out).getTime())
-    }else if(trackedAirport.direction === 'in'){
+    if(direction === 'in'){
         const arrivals: any = await flightAwareService.fetchAirportTimetable(
-            !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!,
-            new Date(parsed.data.start),
-            new Date(parsed.data.end),
+            airportCode,
+            new Date(start),
+            new Date(end),
             'arrivals'
         )
 
         const scheduled: any = await flightAwareService.fetchAirportTimetable(
-            !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!,
-            new Date(parsed.data.start),
-            new Date(parsed.data.end),
+            airportCode,
+            new Date(start),
+            new Date(end),
             'scheduled_arrivals'
         )
 
@@ -214,18 +170,18 @@ export async function getAirportTimetable(request: Request, id: number){
             ...arrivals.arrivals,
             ...scheduled.scheduled_arrivals
         ].sort((a: any, b: any) => new Date(a.scheduled_in).getTime() - new Date(b.scheduled_in).getTime())
-    }else if (trackedAirport.direction === 'out'){
+    }else if (direction === 'out'){
         const departures: any = await flightAwareService.fetchAirportTimetable(
-            !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!,
-            new Date(parsed.data.start),
-            new Date(parsed.data.end),
+            airportCode,
+            new Date(start),
+            new Date(end),
             'departures'
         )
 
         const scheduled: any = await flightAwareService.fetchAirportTimetable(
-            !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!,
-            new Date(parsed.data.start),
-            new Date(parsed.data.end),
+            airportCode,
+            new Date(start),
+            new Date(end),
             'scheduled_departures'
         )
 
@@ -281,14 +237,14 @@ function stopTracking(userId: number, id: number){
     db.prepare("DELETE FROM tracked_airports WHERE user_id = ? AND id = ?").run(userId, id)
 }
 
-function isAirportAlreadyTracked(userId: number, icaoCode: string | null, iataCode: string | null, direction: string, id: number|null = null): {
+function isAirportAlreadyTracked(userId: number, icaoCode: string | null, iataCode: string | null, id: number|null = null): {
     already_tracked: number
 } {
-    const query = "SELECT COUNT(*) as already_tracked FROM tracked_airports WHERE user_id = ? AND (icao_code = ? OR iata_code = ?) AND direction = ?"
+    const query = "SELECT COUNT(*) as already_tracked FROM tracked_airports WHERE user_id = ? AND (icao_code = ? OR iata_code = ?)"
         .concat(id !== null ? " AND id <> ?" : "")
-        .concat("LIMIT 1")
+        .concat(" LIMIT 1")
 
-    const args = [userId, icaoCode, iataCode, direction]
+    const args: any[] = [userId, icaoCode, iataCode]
     if (id !== null) {
         args.push(id)
     }

@@ -18,7 +18,6 @@ import {
     getTrackingAirports,
     searchAirport,
     terminateTracking as terminateTrackingAirport,
-    updateTracking,
     startTracking as startTrackingAirport
 } from "./controllers/airport.controller.ts";
 
@@ -74,7 +73,6 @@ Bun.serve({
         },
         '/api/airport/tracking/:id': {
             "DELETE": async (request) => await terminateTrackingAirport(request, Number(request.params.id)),
-            "PATCH": async (request) => await updateTracking(request, Number(request.params.id)),
         },
         '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)),
         '/api/airport/tracking/:id/delays': async (request) => await getAirportDelays(request, Number(request.params.id)),

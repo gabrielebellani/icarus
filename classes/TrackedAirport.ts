@@ -4,7 +4,6 @@ export class TrackedAirport {
     icao_code: string | null
     name: string | null
     city: string | null
-    direction: string
     latitude: number|null
     longitude: number|null
 
@@ -14,7 +13,6 @@ export class TrackedAirport {
         icao_code: string | null,
         name: string | null,
         city: string | null,
-        direction: string,
         latitude: number|null = null,
         longitude: number|null = null
     ) {
@@ -23,7 +21,6 @@ export class TrackedAirport {
         this.icao_code = icao_code
         this.city = city
         this.name = name
-        this.direction = direction
         this.latitude = latitude
         this.longitude = longitude
     }
@@ -35,7 +32,6 @@ export class TrackedAirport {
             row.icao_code,
             row.name,
             row.city,
-            row.direction,
             row.latitude ? Number(row.latitude) : null,
             row.longitude ? Number(row.longitude) : null
         )

@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS tracked_airports (
     icao_code VARCHAR(16) NULL,
     name VARCHAR(255) NULL,
     city VARCHAR(255) NULL,
-    direction VARCHAR(16) NOT NULL DEFAULT 'in_out',
     latitude varchar(255) NULL,
     longitude varchar(255) NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
