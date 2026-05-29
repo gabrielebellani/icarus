@@ -84,7 +84,6 @@ const initUserSchema = z.object({
         longitude: z.number(),
     }).optional(),
     radius: z.number().optional(),
-    display_mode: z.enum(['minimal', 'detailed', 'flight', 'airport']).optional(),
 });
 
 export async function initUser(request: Request): Promise<Response> {
@@ -106,13 +105,12 @@ export async function initUser(request: Request): Promise<Response> {
         return jsonResponse({ error: 'User already initialized' }, 409);
     }
 
-    const { openSkyNetworkKey, coordinates, radius, display_mode } = parsed.data;
+    const { openSkyNetworkKey, coordinates, radius } = parsed.data;
 
     const preferencesToInsert: [number, string, string | null][] = [
         [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKey ? openSkyNetworkKey.length > 0 ? openSkyNetworkKey : null : null],
         [userId, PreferenceKeyEnum.COORDINATES, coordinates ? JSON.stringify(coordinates) : null],
         [userId, PreferenceKeyEnum.RADIUS, radius != null ? String(radius) : null],
-        [userId, PreferenceKeyEnum.DEFAULT_DISPLAY_MODE, display_mode ?? null],
         [userId, PreferenceKeyEnum.INITIALIZED, 'true'],
     ];
 
