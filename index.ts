@@ -10,7 +10,7 @@ import {
     resetPassword,
     userRequiresInit
 } from './controllers/auth.controller.ts';
-import {getUserPreferences} from "./controllers/preferences.controller.ts";
+import {getThirdPartyAPIUsage, getUserPreferences, setUserPreferences} from "./controllers/preferences.controller.ts";
 import {getTrackingFlight, searchFlight, startTracking, terminateTracking} from "./controllers/flight.controller.ts";
 import {
     getAirportDelays,
@@ -20,6 +20,7 @@ import {
     terminateTracking as terminateTrackingAirport,
     startTracking as startTrackingAirport
 } from "./controllers/airport.controller.ts";
+import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
 
@@ -55,6 +56,7 @@ Bun.serve({
         },
         '/api/preferences': {
             "GET": async (request) => await getUserPreferences(request),
+            "POST": async (request) => await setUserPreferences(request),
         },
         '/api/flight': {
             "GET": async (request) => await searchFlight(request),
@@ -76,6 +78,11 @@ Bun.serve({
         },
         '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)),
         '/api/airport/tracking/:id/delays': async (request) => await getAirportDelays(request, Number(request.params.id)),
+        '/api/user/password': async (request) => await changePassword(request),
+        '/api/user': {
+            "DELETE": async (request) => await deleteAccount(request),
+        },
+        '/api/user/usage': async (request) => getThirdPartyAPIUsage(request),
         '/*': new Response("Not found", {status: 404}),
     },
 })

@@ -1,4 +1,4 @@
-import {endOfDay, startOfDay, formatISO} from "date-fns";
+import {endOfDay, formatISO, startOfDay, startOfMonth, subMinutes} from "date-fns";
 
 export class FlightawareService {
     private readonly key: string
@@ -31,6 +31,18 @@ export class FlightawareService {
 
     public async fetchAirportDelays(code: string) {
         return await this.fetchFromFlightAware(['airports', '/', code, '/', 'delays'])
+    }
+
+    public async fetchUsage(){
+        const endpoint = this.host.concat('account', '/', 'usage')
+        const url = new URL(endpoint)
+        const start = formatISO(startOfMonth(new Date()))
+        const end = formatISO(subMinutes(new Date(), 1))
+
+        url.searchParams.set('start', start)
+        url.searchParams.set('end', end)
+
+        return await this.fetchFromFlightAware(url)
     }
 
     private async fetchFromFlightAware(endpoint: string[]|URL) {

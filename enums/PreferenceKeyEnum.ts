@@ -22,3 +22,10 @@ export const PreferenceKeyToType: Record<PreferenceKeyEnum, PreferenceTypeEnum> 
     [PreferenceKeyEnum.SUPERUSER]: PreferenceTypeEnum.BOOLEAN,
 };
 
+export const PreferenceUserCanSet = [
+    PreferenceKeyEnum.COORDINATES,
+    PreferenceKeyEnum.DEFAULT_DISPLAY_MODE,
+    PreferenceKeyEnum.FLIGHTAWARE_API_KEY,
+    PreferenceKeyEnum.OPEN_SKY_API_KEY,
+    PreferenceKeyEnum.RADIUS,
+]
