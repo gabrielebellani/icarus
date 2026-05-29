@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_au2tay2Gpx
 createdAt: 2026-05-28T21:49:39.068050
-updatedAt: 2026-05-28T21:58:34.442423
+updatedAt: 2026-05-29T08:48:54.029445
 workspaceId: wk_gdGiKSysPR
 folderId: fl_czabde5n6i
 authentication:
@@ -23,7 +23,7 @@ headers:
 method: PATCH
 name: Update airport tracking
 sortPriority: 0.002
-url: ${[ host ]}/api/airport/tracking/1
+url: ${[ host ]}/api/airport/tracking/2
 urlParameters:
 - enabled: true
   name: ''
