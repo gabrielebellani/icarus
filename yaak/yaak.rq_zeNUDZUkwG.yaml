@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_zeNUDZUkwG
 createdAt: 2026-05-29T08:08:28.963488
-updatedAt: 2026-05-29T08:47:39.995124
+updatedAt: 2026-06-01T20:49:46.674300
 workspaceId: wk_gdGiKSysPR
 folderId: fl_czabde5n6i
 authentication:
@@ -13,7 +13,6 @@ body:
     {
       "icao_code": null,
       "iata_code": "BGY",
-      "direction": "in"
     }
 bodyType: application/json
 description: ''

@@ -39,3 +39,18 @@ CREATE TABLE IF NOT EXISTS tracked_airports (
     FOREIGN KEY (user_id) REFERENCES users(id)
     UNIQUE (user_id, iata_code, icao_code, direction)
 );
+
+CREATE TABLE IF NOT EXISTS radars (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    name VARCHAR(255) NULL,
+    coordinates JSON NOT NULL,
+    radius INTEGER NOT NULL,
+    expiration DATETIME NULL,
+    refresh_interval INTEGER NOT NULL,
+    inactivity_timeout INTEGER NULL,
+    created_at DATETIME NOT NULL,
+    timeout_at DATETIME NULL,
+    expired_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

@@ -21,6 +21,13 @@ import {
     startTracking as startTrackingAirport
 } from "./controllers/airport.controller.ts";
 import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
+import {
+    getSingleTrackingRadar,
+    getTrackingRadars,
+    resumeRadar,
+    startTracking as startTrackingRadar,
+    terminateTracking as terminateTrackingRadar
+} from "./controllers/radar.controller.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
 
@@ -76,13 +83,21 @@ Bun.serve({
         '/api/airport/tracking/:id': {
             "DELETE": async (request) => await terminateTrackingAirport(request, Number(request.params.id)),
         },
-        '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)),
-        '/api/airport/tracking/:id/delays': async (request) => await getAirportDelays(request, Number(request.params.id)),
-        '/api/user/password': async (request) => await changePassword(request),
-        '/api/user': {
-            "DELETE": async (request) => await deleteAccount(request),
+        '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)), //TODO: add yaak request
+        '/api/radar/tracking': {
+            "POST": async (request) => await startTrackingRadar(request),
+            "GET": async (request) => await getTrackingRadars(request),
         },
-        '/api/user/usage': async (request) => getThirdPartyAPIUsage(request),
+        '/api/radar/tracking/:id': {
+            "GET": async (request) => await getSingleTrackingRadar(request, String(request.params.id)),
+            "DELETE": async (request) => await terminateTrackingRadar(request, String(request.params.id)),
+            "PUT": async (request) => await resumeRadar(request, String(request.params.id)),
+        },
+        '/api/user/password': async (request) => await changePassword(request), //TODO: add yaak request
+        '/api/user': {
+            "DELETE": async (request) => await deleteAccount(request), //TODO: add yaak request
+        },
+        '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
         '/*': new Response("Not found", {status: 404}),
     },
 })

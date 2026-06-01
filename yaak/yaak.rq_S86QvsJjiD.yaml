@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_S86QvsJjiD
 createdAt: 2026-05-28T21:40:07.297696
-updatedAt: 2026-05-28T21:49:55.301463
+updatedAt: 2026-06-01T20:47:51.539190
 workspaceId: wk_gdGiKSysPR
 folderId: fl_czabde5n6i
 authentication:
@@ -16,12 +16,16 @@ headers: []
 method: DELETE
 name: Terminate airport tracking
 sortPriority: 0.001
-url: ${[ host ]}/api/airport/tracking/1
+url: ${[ host ]}/api/airport/tracking/:id
 urlParameters:
+- enabled: true
+  name: :id
+  value: '1'
+  id: dsdI2riVwK
 - enabled: true
   name: ''
   value: ''
-  id: WVBpd8SmSD
+  id: ku6hJx4dKX
 settingSendCookies:
   enabled: false
   value: true

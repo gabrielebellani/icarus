@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_BVTYV9QSda
 createdAt: 2026-05-28T15:42:29.828158
-updatedAt: 2026-05-28T15:42:37.316074
+updatedAt: 2026-06-01T20:49:09.320949
 workspaceId: wk_gdGiKSysPR
 folderId: fl_czabde5n6i
 authentication:
@@ -14,7 +14,7 @@ bodyType: null
 description: ''
 headers: []
 method: GET
-name: Get active flight tracking Copy
+name: Get airports tracking
 sortPriority: 0.0
 url: ${[ host ]}/api/airport/tracking
 urlParameters:
