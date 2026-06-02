@@ -1,6 +1,6 @@
 {
   "name": "icarus-server",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -10,7 +10,7 @@
     "typescript": "^5"
   },
   "scripts": {
-    "migrate": "bun migrations/migrations.ts"
+    "migrate": "bun src/migrations/migrations.ts"
   },
   "dependencies": {
     "date-fns": "^4.3.0",
