@@ -22,6 +22,7 @@ import {
 } from "./controllers/airport.controller.ts";
 import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
 import {
+    getFlightsInArea,
     getSingleTrackingRadar,
     getTrackingRadars,
     resumeRadar,

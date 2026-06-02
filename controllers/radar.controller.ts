@@ -3,8 +3,9 @@ import {z} from "zod";
 import {jsonResponse} from "../utils/response.ts";
 import {getOpenSkyKey} from "../utils/third_party.ts";
 import {db} from "../index.ts";
-import {RADAR_REFRESH_INTERVAL_S, RADAR_INACTIVITY_TIMEOUT_S} from "../utils/radar.util.ts";
+import {RADAR_REFRESH_INTERVAL_S, RADAR_INACTIVITY_TIMEOUT_S, getBoundingBox} from "../utils/radar.util.ts";
 import {RadarInstance} from "../classes/RadarInstance.ts";
+import {OpenSkyService} from "../services/opensky.service.ts";
 
 const startRadarSchema = z.object({
     coordinates: z.object({
@@ -30,10 +31,6 @@ export async function startTracking(request: Request) {
     }
 
     const userId = auth.user_id;
-    const openskyNetworkKey = getOpenSkyKey(userId);
-    if(!openskyNetworkKey){
-        return jsonResponse({error: "OpenSky Network API key is missing."}, 404);
-    }
 
     const radarData = {
         uuid: crypto.randomUUID(),
@@ -122,6 +119,15 @@ export async function resumeRadar(request: Request, radarId: string) {
     //TODO: implement
 
     return new Response()
+}
+
+export async function getFlightsInArea(coordinates: { latitude: number, longitude: number }, radius: number, userId: number) {
+    const bbox = getBoundingBox(coordinates.latitude, coordinates.longitude, radius)
+
+    const openskyNetworkKey = getOpenSkyKey(userId);
+
+    const openSkyService = new OpenSkyService(openskyNetworkKey);
+    return jsonResponse(await openSkyService.fetchFlightsInArea(bbox))
 }
 
 function getRadarByIdAndUser(radarId: string, userId: number) {

@@ -5,7 +5,7 @@ import {jsonResponse} from "../utils/response.ts";
 import {type PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
 import {AppPreference} from "../classes/AppPreference.ts";
 import {getFlightawareKey} from "../utils/third_party.ts";
-import {FlightawareService} from "../services/FlightAware/flightaware.service.ts";
+import {FlightawareService} from "../services/flightaware.service.ts";
 
 export async function getUserPreferences(request: Request) {
     const auth = await authenticate(request);

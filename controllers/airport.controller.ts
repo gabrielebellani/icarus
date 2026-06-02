@@ -5,7 +5,7 @@ import {jsonResponse} from "../utils/response.ts";
 import {getAirportByCode, searchAirports} from "../utils/airports.util.ts";
 import {z} from "zod";
 import {getFlightawareKey} from "../utils/third_party.ts";
-import {FlightawareService} from "../services/FlightAware/flightaware.service.ts";
+import {FlightawareService} from "../services/flightaware.service.ts";
 import {addHours, subHours} from "date-fns";
 
 export async function searchAirport(request: Request) {

@@ -1,7 +1,7 @@
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {getFlightawareKey} from "../utils/third_party.ts";
 import {jsonResponse} from "../utils/response.ts";
-import {FlightawareService} from "../services/FlightAware/flightaware.service.ts";
+import {FlightawareService} from "../services/flightaware.service.ts";
 import {z} from "zod";
 import {addDays, endOfDay, startOfDay, subDays} from "date-fns";
 import {db} from "../index.ts";
