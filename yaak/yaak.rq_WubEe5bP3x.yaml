@@ -1,0 +1,33 @@
+type: http_request
+model: http_request
+id: rq_WubEe5bP3x
+createdAt: 2026-06-02T20:32:29.228281
+updatedAt: 2026-06-11T17:47:16.584786
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Status
+sortPriority: 6000.0
+url: ${[ host ]}/api/status
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

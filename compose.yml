@@ -5,6 +5,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${ICARUS_BACKEND_PORT:-8921}:3465"
+      - "6499:6499"
+    volumes:
+      - .:/app
+      - /app/node_modules
     restart: unless-stopped
     healthcheck:
       test:
@@ -19,3 +23,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  redis-cache:
+    image: redis:8-alpine
+    ports:
+      - "${ICARUS_REDIS_PORT:-6379}:6379"
+    volumes:
+      - "redis-cache:/data"
+    restart: unless-stopped
+volumes:
+  "redis-cache":
+    driver: local
+networks:
+  default:
+    name: icarus
+    driver: bridge

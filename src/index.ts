@@ -1,4 +1,5 @@
 import {Database} from 'bun:sqlite';
+import {RedisClient} from "bun"
 import runMigrations from './migrations/migrations.ts';
 import {bootstrapSuperuser, getApplicationPublicConfig} from './controllers/application.controller.ts';
 import {
@@ -13,24 +14,24 @@ import {
 import {getThirdPartyAPIUsage, getUserPreferences, setUserPreferences} from "./controllers/preferences.controller.ts";
 import {getTrackingFlight, searchFlight, startTracking, terminateTracking} from "./controllers/flight.controller.ts";
 import {
-    getAirportDelays,
     getAirportTimetable,
     getTrackingAirports,
     searchAirport,
-    terminateTracking as terminateTrackingAirport,
-    startTracking as startTrackingAirport
+    startTracking as startTrackingAirport,
+    terminateTracking as terminateTrackingAirport
 } from "./controllers/airport.controller.ts";
 import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
 import {
-    getFlightsInArea,
     getSingleTrackingRadar,
     getTrackingRadars,
     resumeRadar,
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
+import {jsonResponse} from "./utils/response.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
+export const redis = new RedisClient()
 
 // Esegui migrazioni
 await runMigrations();
@@ -41,7 +42,13 @@ await bootstrapSuperuser();
 Bun.serve({
     port: "3465",
     routes: {
-        "/api/status": new Response("OK"),
+        "/api/status": async () => {
+            return jsonResponse({
+                status: "ok",
+                database: db.query("SELECT 1") ? "connected" : "error",
+                redis: await redis.ping() ? "connected" : "error",
+            })
+        },
         '/api/config': (request) => getApplicationPublicConfig(request),
         '/api/auth/init': {
             "GET": async (request) => await userRequiresInit(request),
