@@ -3,7 +3,7 @@ model: environment
 id: ev_HcPFCx85Ux
 workspaceId: wk_gdGiKSysPR
 createdAt: 2026-05-26T17:53:20.344039
-updatedAt: 2026-06-02T20:00:29.589562
+updatedAt: 2026-06-11T20:07:21.592011
 name: Local
 public: true
 base: false
@@ -12,7 +12,7 @@ parentId: null
 variables:
 - enabled: true
   name: host
-  value: http://localhost:8921
+  value: http://localhost:3465
   id: 6XG4ZItYKj
 - enabled: true
   name: access_token

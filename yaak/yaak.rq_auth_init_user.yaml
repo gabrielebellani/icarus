@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_auth_init_user
 createdAt: 2026-05-27T00:00:00
-updatedAt: 2026-05-27T09:53:57.787893
+updatedAt: 2026-06-11T20:06:52.670962
 workspaceId: wk_gdGiKSysPR
 folderId: fl_9k7giAajhX
 authentication:
@@ -12,11 +12,8 @@ body:
   text: |-
     {
       "openSkyNetworkKey": "",
-      "coordinates": {
-        "latitude": 45.00,
-        "longitude": 9.00
-      },
-      "radius": 25,
+      "openSkyNetworkDailyThreshold": 400,
+      "flightAwareKey": "",
       "display_mode": "detailed"
     }
 bodyType: application/json

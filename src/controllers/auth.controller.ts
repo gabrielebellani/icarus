@@ -79,11 +79,8 @@ export async function userRequiresInit(request: Request): Promise<Response> {
 
 const initUserSchema = z.object({
     openSkyNetworkKey: z.string().optional(),
-    coordinates: z.object({
-        latitude: z.number(),
-        longitude: z.number(),
-    }).optional(),
-    radius: z.number().optional(),
+    openSkyNetworkDailyThreshold: z.int().min(0).optional(),
+    flightAwareKey: z.string().optional(),
 });
 
 export async function initUser(request: Request): Promise<Response> {
@@ -105,12 +102,13 @@ export async function initUser(request: Request): Promise<Response> {
         return jsonResponse({ error: 'User already initialized' }, 409);
     }
 
-    const { openSkyNetworkKey, coordinates, radius } = parsed.data;
+    const { openSkyNetworkKey, openSkyNetworkDailyThreshold, flightAwareKey } = parsed.data;
+    const openSkyNetworkKeyIsSet = !!(openSkyNetworkKey && openSkyNetworkKey.length > 0)
 
-    const preferencesToInsert: [number, string, string | null][] = [
-        [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKey ? openSkyNetworkKey.length > 0 ? openSkyNetworkKey : null : null],
-        [userId, PreferenceKeyEnum.COORDINATES, coordinates ? JSON.stringify(coordinates) : null],
-        [userId, PreferenceKeyEnum.RADIUS, radius != null ? String(radius) : null],
+    const preferencesToInsert: [number, string, string | number | null][] = [
+        [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKeyIsSet ? openSkyNetworkKey : null],
+        [userId, PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, openSkyNetworkDailyThreshold ? openSkyNetworkDailyThreshold : (openSkyNetworkKeyIsSet ? 4000 : 400)],
+        [userId, PreferenceKeyEnum.FLIGHTAWARE_API_KEY, flightAwareKey ? flightAwareKey.length > 0 ? flightAwareKey : null : null],
         [userId, PreferenceKeyEnum.INITIALIZED, 'true'],
     ];
 
