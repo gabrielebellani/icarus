@@ -1,3 +1,5 @@
+import {AircraftTypeEnum} from "../enums/AircraftTypeEnum.ts";
+
 export class OpenSkyState {
     icao24: string
     callsign: string | null
@@ -13,7 +15,7 @@ export class OpenSkyState {
     vertical_rate: number | null
     sensors: number[] | null
     geo_altitude: number | null
-    aircraft_category: number
+    aircraft_type: AircraftTypeEnum
 
     constructor(
         icao24: string,
@@ -46,26 +48,31 @@ export class OpenSkyState {
         this.vertical_rate = vertical_rate
         this.sensors = sensors
         this.geo_altitude = geo_altitude
-        this.aircraft_category = aircraft_category
+
+        if (Object.values(AircraftTypeEnum).includes(aircraft_category)) {
+            this.aircraft_type = aircraft_category as AircraftTypeEnum;
+        } else {
+            this.aircraft_type = AircraftTypeEnum.NoInfo;
+        }
     }
 
     public static fromOpenSkyApi(data: any): OpenSkyState {
         return new OpenSkyState(
-            data.icao24,
-            data.callsign,
-            data.origin_country,
-            data.time_position,
-            data.last_contact,
-            data.longitude,
-            data.latitude,
-            data.baro_altitude,
-            data.on_ground,
-            data.velocity,
-            data.true_track,
-            data.vertical_rate,
-            data.sensors,
-            data.geo_altitude,
-            data.aircraft_category,
+            data[0],
+            data[1],
+            data[2],
+            data[3],
+            data[4],
+            data[5],
+            data[6],
+            data[7],
+            data[8],
+            data[9],
+            data[10],
+            data[11],
+            data[12],
+            data[13],
+            data[16],
         )
     }
 }

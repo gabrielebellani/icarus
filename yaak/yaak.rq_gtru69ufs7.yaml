@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_gtru69ufs7
 createdAt: 2026-06-01T20:46:17.505599
-updatedAt: 2026-06-01T20:53:53.574096
+updatedAt: 2026-06-02T17:11:04.406660
 workspaceId: wk_gdGiKSysPR
 folderId: fl_YtxgwP4QoN
 authentication:
@@ -25,7 +25,7 @@ urlParameters:
 - enabled: true
   name: ''
   value: ''
-  id: yvCwKBpkU5
+  id: Tr4WwijrCE
 settingSendCookies:
   enabled: false
   value: true

@@ -1,0 +1,33 @@
+type: websocket_request
+model: websocket_request
+id: wr_ncVxyqZSdL
+createdAt: 2026-06-02T08:09:13.523220
+updatedAt: 2026-06-02T19:23:50.985087
+workspaceId: wk_gdGiKSysPR
+folderId: fl_YtxgwP4QoN
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+message: start
+name: ''
+sortPriority: -1780387753520.0
+url: ${[ websocket_host ]}/api/radar/open/:id
+urlParameters:
+- enabled: true
+  name: :id
+  value: a64e47a4-5698-4e47-b9fd-f04ac64dc459
+  id: fXfvgR2DgR
+- enabled: true
+  name: ''
+  value: ''
+  id: JEj3YnW6sA
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true

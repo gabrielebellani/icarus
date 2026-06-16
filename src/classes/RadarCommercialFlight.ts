@@ -1,0 +1,65 @@
+import {type Airport, getAirportByCode} from "../utils/airports.util.ts";
+import {type Airline, searchAirline} from "../utils/airlines.util.ts";
+
+export class RadarCommercialFlight {
+    callsign: string
+    status: string
+    routeInfo: {
+        origin: Airport | null,
+        destination: Airport | null,
+        airline: Airline | null
+    } | null
+
+
+    constructor(callsing: string, originAirport: Airport | null, destinationAirport: Airport | null, airline: Airline | null, status: 'matched' | 'unknown') {
+        this.callsign = callsing;
+        this.routeInfo = {
+            origin: originAirport,
+            destination: destinationAirport,
+            airline: airline,
+        };
+        this.status = status
+    }
+
+    public static buildFromAdsbdbResult(callsign: string, result: any) {
+        return this.build(
+            callsign,
+            result.origin.icao_code ?? result.origin.iata_code,
+            result.destination.icao_code ?? result.destination.iata_code,
+            result.airline.iata ?? result.airline.icao,
+        )
+    }
+
+    public static buildFromFlightAwareResult(callsign: string, result: any) {
+        return this.build(
+            callsign,
+            result.origin.code_icao ?? result.origin.code_iata,
+            result.destination.code_icao ?? result.destination.code_iata,
+            result.airline.operator_icao ?? result.airline.operator_iata,
+        )
+    }
+
+    public static buildFormPersistedRoute(row: any) {
+        return this.build(
+            row.callsign,
+            row.origin_icao ?? row.origin_iata,
+            row.destination_icao ?? row.destination_iata,
+            row.airline
+        )
+    }
+
+    private static build(
+        callsign: string,
+        airportOriginCode: string | null,
+        destinationAirportCode: string | null,
+        airlineIATA: string
+    ) {
+        return new RadarCommercialFlight(
+            callsign,
+            getAirportByCode(airportOriginCode),
+            getAirportByCode(destinationAirportCode),
+            searchAirline(airlineIATA),
+            'matched'
+        )
+    }
+}

@@ -54,3 +54,13 @@ CREATE TABLE IF NOT EXISTS radars (
     expired_at DATETIME NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS cached_routes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    callsign VARCHAR(16) UNIQUE,
+    origin_icao VARCHAR(16),
+    origin_iata VARCHAR(16),
+    destination_icao VARCHAR(16),
+    destination_iata VARCHAR(16),
+    airline VARCHAR(255)
+)

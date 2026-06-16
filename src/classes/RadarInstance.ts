@@ -53,4 +53,12 @@ export class RadarInstance {
             row.expired_at ? new Date(row.expired_at) : null,
         )
     }
+
+    get refreshIntervalMs(): number {
+        return this.refresh_interval * 1000;
+    }
+
+     get inactivityTimeoutMs(): number | null {
+        return this.inactivity_timeout !== null ? this.inactivity_timeout * 1000 : null;
+    }
 }

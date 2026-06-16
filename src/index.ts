@@ -23,11 +23,13 @@ import {
 import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
 import {
     getSingleTrackingRadar,
-    getTrackingRadars,
+    getTrackingRadars, refreshRadar,
     resumeRadar,
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
+import type {ServerWebSocket} from "bun";
+import * as Buffer from "node:buffer";
 import {jsonResponse} from "./utils/response.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
@@ -101,6 +103,13 @@ Bun.serve({
             "DELETE": async (request) => await terminateTrackingRadar(request, String(request.params.id)),
             "PUT": async (request) => await resumeRadar(request, String(request.params.id)),
         },
+        '/api/radar/open/:id': async (request, server) => {
+            if (server.upgrade(request, { data: { id: String(request.params.id) } })) {
+                return;
+            }
+
+            return new Response("Upgrade failed", {status: 500});
+        },
         '/api/user/password': async (request) => await changePassword(request), //TODO: add yaak request
         '/api/user': {
             "DELETE": async (request) => await deleteAccount(request), //TODO: add yaak request
@@ -108,6 +117,18 @@ Bun.serve({
         '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
         '/*': new Response("Not found", {status: 404}),
     },
+    websocket: {
+        data: {} as { id: string },
+        async open(ws) {
+            await refreshRadar(ws.data.id, ws)
+        },
+        message(ws, message): void | Promise<void> {
+          //do nothing, radar updates are pushed from the server side
+        },
+        close(ws, code, reason) {
+            console.log(`[websocket] Radar ${ws.data.id} connection closed. Code: ${code} ${reason ? ` - Reason: ${reason}` : ''}`);
+        },
+    }
 })
 
 console.log('[server] In ascolto su http://localhost:3465');

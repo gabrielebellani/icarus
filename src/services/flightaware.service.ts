@@ -8,7 +8,7 @@ export class FlightawareService {
         this.key = key
     }
 
-    public async fetchFlightInfo(code: string, date: Date) {
+    public async fetchFlightInfo(code: string, date: Date): Promise<any> {
         const endpoint = this.host.concat('flights', '/', code)
         const url = new URL(endpoint)
         const start = formatISO(startOfDay(date))

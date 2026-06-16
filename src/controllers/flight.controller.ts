@@ -82,7 +82,7 @@ export async function startTracking(request: Request){
     }
 
     const flightAwareService = new FlightawareService(flightAwareKey)
-    const flightInfo: any = await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date))
+    const flightInfo = await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date))
 
     if(flightInfo.flights.length === 0){
         return jsonResponse({error: "Flight not found"}, 404)
