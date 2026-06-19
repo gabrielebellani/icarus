@@ -8,7 +8,8 @@ export enum AircraftTypeEnum {
     Heavy = 6,
     HighPerformance = 7,
     Rotorcraft = 8,
-    Others = 9
+    Others = 9,
+    SpecialTypesMinimum = 13
 }
 
 export const DefaultAircraftTypeDisplayPriority : AircraftTypeEnum[] = [

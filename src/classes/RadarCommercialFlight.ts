@@ -11,8 +11,8 @@ export class RadarCommercialFlight {
     } | null
 
 
-    constructor(callsing: string, originAirport: Airport | null, destinationAirport: Airport | null, airline: Airline | null, status: 'matched' | 'unknown') {
-        this.callsign = callsing;
+    constructor(callsign: string, originAirport: Airport | null, destinationAirport: Airport | null, airline: Airline | null, status: 'matched' | 'unknown') {
+        this.callsign = callsign;
         this.routeInfo = {
             origin: originAirport,
             destination: destinationAirport,
@@ -21,12 +21,17 @@ export class RadarCommercialFlight {
         this.status = status
     }
 
-    public static buildFromAdsbdbResult(callsign: string, result: any) {
+    public static buildFromAdsbLolResult(callsign: string, result: any) {
+        const airports: any[] = result._airports
+        const origin = airports[0]
+        const destination = airports[-1]
+        const airline = result.airline_code
+
         return this.build(
             callsign,
-            result.origin.icao_code ?? result.origin.iata_code,
-            result.destination.icao_code ?? result.destination.iata_code,
-            result.airline.iata ?? result.airline.icao,
+            origin.icao ?? origin.iata,
+            destination.icao ?? destination.iata,
+            airline
         )
     }
 
@@ -39,7 +44,7 @@ export class RadarCommercialFlight {
         )
     }
 
-    public static buildFormPersistedRoute(row: any) {
+    public static buildFromPersistedRoute(row: any) {
         return this.build(
             row.callsign,
             row.origin_icao ?? row.origin_iata,
@@ -52,7 +57,7 @@ export class RadarCommercialFlight {
         callsign: string,
         airportOriginCode: string | null,
         destinationAirportCode: string | null,
-        airlineIATA: string
+        airlineIATA: string | null
     ) {
         return new RadarCommercialFlight(
             callsign,

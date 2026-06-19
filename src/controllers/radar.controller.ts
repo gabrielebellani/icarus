@@ -10,10 +10,11 @@ import type {ServerWebSocket} from "bun";
 import {redis} from "bun"
 import type {OpenSkyState} from "../classes/OpenSkyState.ts";
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
-import {AdsbdbService} from "../services/adsbdb.service.ts";
+import {AdsbLolService} from "../services/adsbLolService.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
-import {DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
+import {AircraftTypeEnum, DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
 import {RadarSingleAircraft} from "../classes/RadarSingleAircraft.ts";
+import {differenceInSeconds, endOfToday, startOfToday} from "date-fns";
 
 const startRadarSchema = z.object({
     coordinates: z.object({
@@ -145,13 +146,20 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
 
     console.log(`[websocket] Radar ${radarId} connection established.`);
 
+    const computeRefresh = async () => {
+        return JSON.stringify({
+            aircraft: await getFlightsInArea(radarInstance.coordinates, radarInstance.radius, 1), //TODO get user id from ws request context
+            openSkyDailyUsage: await trackOpenSkyRequestsCount(1) //TODO get user id from ws request context
+        })
+    }
+
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(await getFlightsInArea(radarInstance.coordinates, radarInstance.radius, 1))) //TODO get user id from ws request context;
+        ws.send(await computeRefresh())
     }
 
     setInterval(async () => {
         if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(await getFlightsInArea(radarInstance.coordinates, radarInstance.radius, 1))) //TODO get user id from ws request context;
+            ws.send(await computeRefresh())
         }
     }, radarInstance.refreshIntervalMs);
 }
@@ -168,23 +176,7 @@ export async function getFlightsInArea(coordinates: {
     const aircraftInArea = await openSkyService.fetchAircraftInArea(bbox)
 
     const prioritizedAircraft = getPrioritizedAircraft(aircraftInArea, userId).slice(0, 5)
-    const aircraftsToDisplay: RadarSingleAircraft[] = []
-
-    for (const adsbState of prioritizedAircraft) {
-        //if it doesn't have a callsign return only adsb data, else get flight info
-        if (!adsbState.callsign) {
-            aircraftsToDisplay.push(
-                new RadarSingleAircraft(adsbState, null)
-            )
-        } else {
-            const flightInfo = await getFlightInfo(adsbState.callsign, userId)
-            aircraftsToDisplay.push(
-                new RadarSingleAircraft(adsbState, flightInfo)
-            )
-        }
-    }
-
-    return aircraftsToDisplay
+    return await getFlightsInfo(prioritizedAircraft, userId, coordinates)
 }
 
 function getRadarByIdAndUser(radarId: string, userId: number) {
@@ -195,9 +187,23 @@ function getRadarByIdAndUser(radarId: string, userId: number) {
     return RadarInstance.fromDbRow(radarRow);
 }
 
-async function getFlightInfo(callsign: string, userId: number) {
+async function getFlightsInfo(statesInArea: OpenSkyState[], userId: number, coordinates: {
+    latitude: number,
+    longitude: number
+}) {
 
-    const fallbackFlightSearch = async () => {
+    const fallbackAdsbLol = async (states: OpenSkyState[]) => {
+        const adsblolService = new AdsbLolService();
+        const objs = states.map(e => ({
+            callsign: e.callsign,
+            lat: e.latitude,
+            lng: e.longitude
+        }))
+
+        return await adsblolService.fetchFlightsByCallsignAndPosition(objs as unknown as {callsign: string, lat: string, lng: string}[]);
+    }
+
+    const fallbackFlightSearch = async (callsign: string) => {
         const flightAwareKey = getFlightawareKey(userId);
         if (!flightAwareKey) {
             return null;
@@ -215,90 +221,124 @@ async function getFlightInfo(callsign: string, userId: number) {
             return null;
         }
 
-        return RadarCommercialFlight.buildFromFlightAwareResult(
-            callsign, flight
-        )
-    }
-    const fallbackAdsdb = async () => {
-        const adsbdbService = new AdsbdbService();
-        return await adsbdbService.fetchFlightByCallsign(callsign);
+        return RadarCommercialFlight.buildFromFlightAwareResult(callsign, flight)
     }
 
-    //search in the database if the route is persisted
-    let flightInfo: RadarCommercialFlight | null = getPersistedRoute(callsign)
-    if (flightInfo) {
-        return flightInfo
-    }
+    //get available routes from database
+    const validCallsigns = statesInArea.map(s => s.callsign).filter(c => c !== null)
+    const persistedRoutes = getPersistedRoutes(validCallsigns)
 
-    try {
-        //search if is available on adsbdb.com
-        if (!flightInfo) {
-            flightInfo = await fallbackAdsdb()
+    const nonPersistedCallsigns = validCallsigns.filter(c => !persistedRoutes.find(r => r.callsign === c))
+    const nonPersistedStates = statesInArea.filter(c => c.callsign && nonPersistedCallsigns.includes(c.callsign))
+    const adsbLolFetched = nonPersistedStates.length > 0
+        ? await fallbackAdsbLol(nonPersistedStates)
+        : []
+
+    const aircraftsToDisplay: RadarSingleAircraft[] = []
+
+    for (const stateInArea of statesInArea){
+        const callsign = stateInArea.callsign
+        //if it doesn't have a callsign return only adsb data, else get route information
+        if (!callsign) {
+            aircraftsToDisplay.push(
+                new RadarSingleAircraft(stateInArea, null)
+            )
+            continue
         }
 
-    } catch (e: any) {
-        //if not found, try on FlightAware
-        if (e.message === 'Unknown callsign') {
-            flightInfo = await fallbackFlightSearch()
-        }
-    }
+        //search the callsign between the persisted routes
+        let routeInfo = persistedRoutes.find(r => r.callsign === callsign) ?? null
 
-    //if not found, return an unknown flight to save future calls to external APIs
-    if (!flightInfo) {
-        return new RadarCommercialFlight(
-            callsign,
-            null,
-            null,
-            null,
-            'unknown'
+        if(!routeInfo){
+            const adsbLolRoute = adsbLolFetched.find(r => r.callsign === callsign)
+            if(adsbLolRoute && adsbLolRoute.route && adsbLolRoute.plausible){
+                routeInfo = adsbLolRoute.route
+            }else if(adsbLolRoute && adsbLolRoute.route === null){
+                //fallback on flightaware
+                routeInfo = await fallbackFlightSearch(adsbLolRoute.callsign)
+            }
+        }
+
+        //if not found, return an unknown flight to save future calls to external APIs
+        if(!routeInfo){
+             routeInfo = new RadarCommercialFlight(
+                callsign,
+                null,
+                null,
+                null,
+                'unknown'
+            )
+        }
+
+        persistRoute(routeInfo)
+            .catch((e) => {
+                console.error(e)
+            })
+
+        aircraftsToDisplay.push(
+            new RadarSingleAircraft(stateInArea, routeInfo)
         )
     }
 
-    persistRoute(flightInfo)
-        .catch((e) => {
-            console.error(e)
-        })
-
-    return flightInfo;
+    return aircraftsToDisplay;
 }
 
-function getPersistedRoute(callsign: string): RadarCommercialFlight | null {
-    const result: any = db.query('SELECT * FROM cached_routes WHERE callsign = ?')
-        .get(callsign)
-
-    if (!!result) {
-        return RadarCommercialFlight.buildFormPersistedRoute(result)
-    }
-
-    return null
+function getPersistedRoutes(callsigns: string[]): RadarCommercialFlight[] {
+    return db.query('SELECT * FROM cached_routes WHERE callsign IN(?)')
+        .all(callsigns.toString())
+        .map((row: any) => RadarCommercialFlight.buildFromPersistedRoute(row))
 }
 
 async function persistRoute(flight: RadarCommercialFlight) {
-     db.prepare(
-         `INSERT INTO cached_routes (callsign, origin_icao, origin_iata, destination_icao, destination_iata, airline)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT (callsign) DO UPDATE SET origin_icao      = excluded.origin_icao,
-                                               origin_iata      = excluded.origin_iata,
-                                               destination_icao = excluded.destination_icao,
-                                               destination_iata = excluded.destination_iata,
-                                               airline          = excluded.airline`
-     ).run(
-         flight.callsign,
-         flight.routeInfo?.origin?.icao ?? null,
-         flight.routeInfo?.origin?.iata ?? null,
-         flight.routeInfo?.destination?.icao ?? null,
-         flight.routeInfo?.destination?.iata ?? null,
-         flight.routeInfo?.airline?.iata ?? null,
-     );
+    db.prepare(
+        `INSERT INTO cached_routes (callsign, origin_icao, origin_iata, destination_icao, destination_iata, airline)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (callsign) DO UPDATE SET origin_icao      = excluded.origin_icao,
+                                              origin_iata      = excluded.origin_iata,
+                                              destination_icao = excluded.destination_icao,
+                                              destination_iata = excluded.destination_iata,
+                                              airline          = excluded.airline`
+    ).run(
+        flight.callsign,
+        flight.routeInfo?.origin?.icao ?? null,
+        flight.routeInfo?.origin?.iata ?? null,
+        flight.routeInfo?.destination?.icao ?? null,
+        flight.routeInfo?.destination?.iata ?? null,
+        flight.routeInfo?.airline?.iata ?? null,
+    );
 }
 
 function getPrioritizedAircraft(flights: OpenSkyState[], userId: number) {
+    //todo: customizable order
     const priority = DefaultAircraftTypeDisplayPriority
     const prioritizedFlights: OpenSkyState[] = []
 
     for (const aircraftTypeEnum of priority) {
-        const filteredFlights = flights.filter((flight: OpenSkyState) => flight.aircraft_type === aircraftTypeEnum)
+        const filteredFlights = flights.filter(
+            (flight: OpenSkyState) =>
+                flight.aircraft_type === aircraftTypeEnum
+                || (
+                    flight.aircraft_type > AircraftTypeEnum.Others
+                    && flight.aircraft_type < AircraftTypeEnum.SpecialTypesMinimum
+                )
+        )
         prioritizedFlights.push(...filteredFlights)
     }
     return prioritizedFlights
+}
+
+async function trackOpenSkyRequestsCount(userId: number) {
+    const unixToday = startOfToday().getTime()
+    const todayKey = 'opensky_daily_requests_count:'.concat(userId.toString(), ':', unixToday.toString())
+    let dailyCount = await redis.get(todayKey)
+
+    if (dailyCount) {
+        await redis.incr(todayKey)
+    } else {
+        const diffToEndOfToday = differenceInSeconds(endOfToday(), new Date().getTime())
+        dailyCount = '1'
+        await redis.setex(todayKey, diffToEndOfToday, dailyCount)
+    }
+
+    return Number(dailyCount)
 }
