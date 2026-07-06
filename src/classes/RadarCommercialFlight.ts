@@ -24,8 +24,12 @@ export class RadarCommercialFlight {
     public static buildFromAdsbLolResult(callsign: string, result: any) {
         const airports: any[] = result._airports
         const origin = airports[0]
-        const destination = airports[-1]
+        const destination = airports[airports.length - 1]
         const airline = result.airline_code
+
+        if(!origin || !destination){
+            return new RadarCommercialFlight(callsign, null, null, null, 'unknown')
+        }
 
         return this.build(
             callsign,

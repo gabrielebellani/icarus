@@ -2,7 +2,7 @@ type: folder
 model: folder
 id: fl_czabde5n6i
 createdAt: 2026-05-28T15:41:28.123663
-updatedAt: 2026-05-28T15:41:43.910652
+updatedAt: 2026-06-19T16:56:47.605103
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 description: ''
 headers: []
 name: Airport
-sortPriority: 0.0
+sortPriority: 3000.0
 settingSendCookies:
   enabled: false
   value: true

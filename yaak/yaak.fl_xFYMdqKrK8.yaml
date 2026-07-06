@@ -2,7 +2,7 @@ type: folder
 model: folder
 id: fl_xFYMdqKrK8
 createdAt: 2026-05-27T09:54:44.651427
-updatedAt: 2026-05-27T19:52:23.302099
+updatedAt: 2026-06-19T16:56:47.602641
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 description: ''
 headers: []
 name: Flight
-sortPriority: 0.0
+sortPriority: 2000.0
 settingSendCookies:
   enabled: false
   value: true

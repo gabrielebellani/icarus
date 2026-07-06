@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_WubEe5bP3x
 createdAt: 2026-06-02T20:32:29.228281
-updatedAt: 2026-06-11T17:47:16.584786
+updatedAt: 2026-06-19T16:56:47.615188
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -13,7 +13,7 @@ description: ''
 headers: []
 method: GET
 name: Status
-sortPriority: 6000.0
+sortPriority: 7000.0
 url: ${[ host ]}/api/status
 urlParameters: []
 settingSendCookies:

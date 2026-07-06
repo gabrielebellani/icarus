@@ -2,7 +2,7 @@ type: folder
 model: folder
 id: fl_RC4TbsTaGz
 createdAt: 2026-05-27T19:52:16.962249
-updatedAt: 2026-05-27T19:52:23.323107
+updatedAt: 2026-06-19T16:56:47.612265
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 description: ''
 headers: []
 name: Config
-sortPriority: 3000.0
+sortPriority: 6000.0
 settingSendCookies:
   enabled: false
   value: true

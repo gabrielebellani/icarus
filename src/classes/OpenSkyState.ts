@@ -58,8 +58,8 @@ export class OpenSkyState {
 
     public static fromOpenSkyApi(data: any): OpenSkyState {
         return new OpenSkyState(
-            data[0],
-            data[1],
+            (data[0] as string).trim(),
+            (data[1] as string).trim(),
             data[2],
             data[3],
             data[4],

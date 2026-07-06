@@ -9,9 +9,14 @@ export class AdsbLolService {
             'POST',
             JSON.stringify({planes: flights})
         )
-        const body: any = await apiResponse.json()
 
-        if(body === null || body.length === 0){
+        if (!apiResponse.ok) {
+            throw new Error(`HTTP error ${apiResponse.status}`)
+        }
+
+        const body = await apiResponse.json()
+
+        if (!Array.isArray(body) || body.length === 0) {
             throw new Error('Not found')
         }
 
@@ -28,7 +33,11 @@ export class AdsbLolService {
         return results
     }
 
-    private async fetchFromAdsbLol(endpoint: string | URL, method: RequestInit['method'] = 'GET', body: RequestInit['body']) {
+    private async fetchFromAdsbLol(
+        endpoint: string | URL,
+        method: RequestInit['method'] = 'GET',
+        body?: RequestInit['body']
+    ) {
         let ep = this.host
         if (endpoint instanceof URL) {
             ep = endpoint.toString()
@@ -37,9 +46,17 @@ export class AdsbLolService {
         }
         const url = new URL(ep)
 
-        const headers = new Headers()
-        headers.set('Accept', 'application/json')
+        const headers = new Headers({
+            "accept": "application/json",
+            "content-type": "application/json",
+            // "origin": "https://api.adsb.lol",
+            "referer": "https://api.adsb.lol/docs",
+        })
 
-        return await fetch(url, {headers, method, body});
+        return fetch(url, {
+            method,
+            headers,
+            body
+        })
     }
 }

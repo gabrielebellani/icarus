@@ -2,7 +2,7 @@ type: folder
 model: folder
 id: fl_YtxgwP4QoN
 createdAt: 2026-06-01T20:07:33.962493
-updatedAt: 2026-06-01T20:07:33.962494
+updatedAt: 2026-06-19T16:56:47.599598
 workspaceId: wk_gdGiKSysPR
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 description: ''
 headers: []
 name: Radar
-sortPriority: -1780344453959.0
+sortPriority: 1000.0
 settingSendCookies:
   enabled: false
   value: true

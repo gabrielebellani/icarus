@@ -10,7 +10,7 @@ import type {ServerWebSocket} from "bun";
 import {redis} from "bun"
 import type {OpenSkyState} from "../classes/OpenSkyState.ts";
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
-import {AdsbLolService} from "../services/adsbLolService.ts";
+import {AdsbLolService} from "../services/adsbLol.service.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
 import {AircraftTypeEnum, DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
 import {RadarSingleAircraft} from "../classes/RadarSingleAircraft.ts";
@@ -200,7 +200,12 @@ async function getFlightsInfo(statesInArea: OpenSkyState[], userId: number, coor
             lng: e.longitude
         }))
 
-        return await adsblolService.fetchFlightsByCallsignAndPosition(objs as unknown as {callsign: string, lat: string, lng: string}[]);
+        try{
+            return await adsblolService.fetchFlightsByCallsignAndPosition(objs as unknown as {callsign: string, lat: string, lng: string}[]);
+        }catch(e){
+            console.error(e)
+            return []
+        }
     }
 
     const fallbackFlightSearch = async (callsign: string) => {
