@@ -10,4 +10,5 @@ export const env = {
     get SUPERUSER_USERNAME() { return requireEnv('SUPERUSER_USERNAME'); },
     get SUPERUSER_PASSWORD() { return requireEnv('SUPERUSER_PASSWORD'); },
     get JWT_SECRET() { return requireEnv('JWT_SECRET'); },
+    get JETAPI_SCRAPER_URL() { return requireEnv('JETAPI_SCRAPER_URL'); },
 };

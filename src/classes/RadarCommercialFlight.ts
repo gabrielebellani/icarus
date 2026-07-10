@@ -48,7 +48,7 @@ export class RadarCommercialFlight {
         )
     }
 
-    public static buildFromPersistedRoute(row: any) {
+    public static buildFromPersistedRecord(row: any) {
         return this.build(
             row.callsign,
             row.origin_icao ?? row.origin_iata,

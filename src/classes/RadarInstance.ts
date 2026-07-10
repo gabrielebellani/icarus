@@ -1,6 +1,8 @@
+import type {Coordinates} from "../utils/Coordinates.ts";
+
 export class RadarInstance {
     id: number
-    coordinates: { latitude: number, longitude: number }
+    coordinates: Coordinates
     radius: number
     expiration: Date | null
     refresh_interval: number
@@ -12,7 +14,7 @@ export class RadarInstance {
 
     constructor(
         id: number,
-        coordinates: { latitude: number, longitude: number },
+        coordinates: Coordinates,
         radius: number,
         expiration: Date | null,
         refresh_interval: number,

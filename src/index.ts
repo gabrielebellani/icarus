@@ -104,7 +104,25 @@ Bun.serve({
             "PUT": async (request) => await resumeRadar(request, String(request.params.id)),
         },
         '/api/radar/open/:id': async (request, server) => {
-            if (server.upgrade(request, { data: { id: String(request.params.id) } })) {
+            let token: string | null = null;
+            
+            // Prova prima dall'header Authorization (REST client)
+            const authHeader = request.headers.get('Authorization');
+            if (authHeader?.startsWith('Bearer ')) {
+                token = authHeader.slice(7);
+            }
+            
+            // Se non c'è, prova dal query parameter (WebSocket browser/client, Yaak)
+            if (!token) {
+                const url = new URL(request.url);
+                token = url.searchParams.get('token');
+            }
+            
+            if (!token) {
+                return jsonResponse({ error: 'Missing token' }, 401);
+            }
+
+            if (server.upgrade(request, { data: { id: String(request.params.id), token } })) {
                 return;
             }
 
@@ -118,7 +136,7 @@ Bun.serve({
         '/*': new Response("Not found", {status: 404}),
     },
     websocket: {
-        data: {} as { id: string },
+        data: {} as { id: string, token: string },
         async open(ws) {
             await refreshRadar(ws.data.id, ws)
         },

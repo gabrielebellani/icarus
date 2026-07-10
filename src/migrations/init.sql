@@ -63,4 +63,10 @@ CREATE TABLE IF NOT EXISTS cached_routes (
     destination_icao VARCHAR(16),
     destination_iata VARCHAR(16),
     airline VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS cached_icao24 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    icao24 VARCHAR(16),
+    data JSON NULL
 )

@@ -2,17 +2,25 @@ type: websocket_request
 model: websocket_request
 id: wr_ncVxyqZSdL
 createdAt: 2026-06-02T08:09:13.523220
-updatedAt: 2026-06-02T19:23:50.985087
+updatedAt: 2026-07-10T10:05:09.326416
 workspaceId: wk_gdGiKSysPR
 folderId: fl_YtxgwP4QoN
 authentication: {}
-authenticationType: null
+authenticationType: none
 description: ''
-headers: []
-message: start
+headers:
+- enabled: false
+  name: ''
+  value: ''
+  id: YpJsHZwa4z
+- enabled: true
+  name: ''
+  value: ''
+  id: IQ3jazGV34
+message: ''
 name: ''
 sortPriority: -1780387753520.0
-url: ${[ websocket_host ]}/api/radar/open/:id
+url: ${[ websocket_host ]}/api/radar/open/:id?token=${[ access_token ]}
 urlParameters:
 - enabled: true
   name: :id
@@ -21,7 +29,7 @@ urlParameters:
 - enabled: true
   name: ''
   value: ''
-  id: JEj3YnW6sA
+  id: VBs3SWWJzU
 settingSendCookies:
   enabled: false
   value: true

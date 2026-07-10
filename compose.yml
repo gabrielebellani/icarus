@@ -30,6 +30,10 @@ services:
     volumes:
       - "redis-cache:/data"
     restart: unless-stopped
+  jetapi-scraper:
+    image: ghcr.io/gabrielebellani/jetapi_scarper_docker:1.0.0
+    ports:
+      - "${JETAPI_SCRAPER_PORT:-8922}:8922"
 volumes:
   "redis-cache":
     driver: local
