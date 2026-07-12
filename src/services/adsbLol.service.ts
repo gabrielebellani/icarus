@@ -5,7 +5,7 @@ export class AdsbLolService extends ThirdPartyHttpService {
     override host = 'https://api.adsb.lol/api/'
 
     public async fetchFlightsByCallsignAndPosition(flights: {callsign: string, lat: string, lng: string}[]) {
-        const apiResponse: Response = await this.fetch(
+        const apiResponse: Response = <Response>await this.fetch(
             '0/routeset',
             {
                 "Content-Type": "application/json",
@@ -13,6 +13,7 @@ export class AdsbLolService extends ThirdPartyHttpService {
             },
             'POST',
             JSON.stringify({planes: flights}),
+            true
         )
 
         if (!apiResponse.ok) {

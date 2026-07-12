@@ -2,7 +2,7 @@ export class ThirdPartyHttpService {
 
     protected host: string = ''
 
-    public async fetch(endpoint: string | URL, headersToAdd?: { [key: string]: string }, method: string = 'GET', body?: any){
+    public async fetch(endpoint: string | URL, headersToAdd?: { [key: string]: string }, method: string = 'GET', body?: any, returnResponse: boolean = false): Promise<ThirdPartyHttpServiceResponse|Response> {
         let ep = this.host
         if (endpoint instanceof URL) {
             ep = endpoint.toString()
@@ -19,7 +19,22 @@ export class ThirdPartyHttpService {
         }
         headers.set('Accept', 'application/json')
 
-        return await fetch(url, {method, body, headers});
+        const response: Response = await fetch(url, {method, body, headers});
+        if(returnResponse){
+            return response
+        }
+
+        return {
+            content: await response.json(),
+            status: response.status,
+            ok: response.ok
+        }
     }
 
+}
+
+export interface ThirdPartyHttpServiceResponse {
+    content: any
+    status: number
+    ok: boolean
 }

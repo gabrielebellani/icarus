@@ -1,5 +1,5 @@
 import {endOfDay, formatISO, startOfDay, startOfMonth, subMinutes} from "date-fns";
-import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyHttpService, type ThirdPartyHttpServiceResponse} from "./thirdPartyHttp.service.ts";
 
 export class FlightawareService extends ThirdPartyHttpService {
     private readonly key: string
@@ -49,7 +49,7 @@ export class FlightawareService extends ThirdPartyHttpService {
     }
 
     private async fetchFromFlightAware(endpoint: URL) {
-        const response = await this.fetch(
+        const response = <ThirdPartyHttpServiceResponse>await this.fetch(
             endpoint,
             {
                 'x-apikey': this.key
@@ -58,6 +58,6 @@ export class FlightawareService extends ThirdPartyHttpService {
             undefined,
         )
 
-        return await response.json();
+        return response.content;
     }
 }

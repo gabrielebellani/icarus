@@ -26,9 +26,9 @@ export class RadarDataService {
         userId: number,
         openSkyKey: string | null
     ): Promise<RadarSingleAircraft[]> {
-        if (!openSkyKey) {
-            return [];
-        }
+        // if (!openSkyKey) {
+        //     return [];
+        // }
 
         const bbox = getBoundingBox(coordinates.latitude, coordinates.longitude, radius);
         const openSkyService = new OpenSkyService(openSkyKey);

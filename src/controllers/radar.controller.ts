@@ -152,7 +152,6 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
                 userId,
                 openSkyKey
             ),
-            openSkyDailyUsage: 1
         })
     }
 

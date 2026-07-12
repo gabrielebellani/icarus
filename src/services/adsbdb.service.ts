@@ -1,12 +1,11 @@
 import {AircraftInfo} from "../classes/AircraftInfo.ts";
-import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyHttpService, type ThirdPartyHttpServiceResponse} from "./thirdPartyHttp.service.ts";
 
 export class AdsbdbService extends ThirdPartyHttpService {
     override host = 'https://api.adsbdb.com/v0/'
 
     public async fetchAircraftInformationByIcao24(icao24: string) {
-        const apiResponse: Response = await this.fetch('aircraft/' + icao24)
-        const body: any = await apiResponse.json()
+        const apiResponse: ThirdPartyHttpServiceResponse = <ThirdPartyHttpServiceResponse>await this.fetch('aircraft/' + icao24)
 
         // TODO: enable if a fallback API service is implemented
         // if(apiResponse.status === 404){
@@ -14,7 +13,7 @@ export class AdsbdbService extends ThirdPartyHttpService {
         // }
 
         if(apiResponse.ok){
-            return AircraftInfo.buildFromAdsbDbResult(icao24, body.response.aircraft)
+            return AircraftInfo.buildFromAdsbDbResult(icao24, apiResponse.content.response.aircraft)
         }
 
         return null
