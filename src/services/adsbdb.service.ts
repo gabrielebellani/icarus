@@ -1,11 +1,11 @@
-import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {AircraftInfo} from "../classes/AircraftInfo.ts";
+import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 
-export class AdsbdbService {
-    private host: string = 'https://api.adsbdb.com/v0/'
+export class AdsbdbService extends ThirdPartyHttpService {
+    override host = 'https://api.adsbdb.com/v0/'
 
     public async fetchAircraftInformationByIcao24(icao24: string) {
-        const apiResponse: Response = await this.fetchFromAdsbdb('aircraft/' + icao24)
+        const apiResponse: Response = await this.fetch('aircraft/' + icao24)
         const body: any = await apiResponse.json()
 
         // TODO: enable if a fallback API service is implemented
@@ -18,20 +18,5 @@ export class AdsbdbService {
         }
 
         return null
-    }
-
-    private async fetchFromAdsbdb(endpoint: string | URL) {
-        let ep = this.host
-        if (endpoint instanceof URL) {
-            ep = endpoint.toString()
-        } else {
-            ep = ep.concat(endpoint)
-        }
-        const url = new URL(ep)
-
-        const headers = new Headers()
-        headers.set('Accept', 'application/json')
-
-        return await fetch(url, {headers});
     }
 }

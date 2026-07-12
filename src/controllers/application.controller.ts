@@ -2,7 +2,7 @@ import {db} from "../index.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {env} from "../utils/env.ts";
 import {jsonResponse} from "../utils/response.ts";
-import {getAppPreference, getPreference} from "./preferences.controller.ts";
+import {getAppPreference} from "./preferences.controller.ts";
 
 export async function bootstrapSuperuser(): Promise<void> {
     const username = env.SUPERUSER_USERNAME;

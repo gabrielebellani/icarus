@@ -1,4 +1,6 @@
 import {AircraftTypeEnum} from "../enums/AircraftTypeEnum.ts";
+import {getDistanceFromCoordinates} from "../utils/radar.util.ts";
+import type {Coordinates} from "../utils/Coordinates.ts";
 
 export class OpenSkyState {
     icao24: string
@@ -16,6 +18,7 @@ export class OpenSkyState {
     sensors: number[] | null
     geo_altitude: number | null
     aircraft_type: AircraftTypeEnum
+    private _distanceFromRadarCenter: number | null = null
 
     constructor(
         icao24: string,
@@ -74,5 +77,14 @@ export class OpenSkyState {
             data[13],
             data[16],
         )
+    }
+
+
+    get distanceFromRadarCenter(): number | null {
+        return this._distanceFromRadarCenter;
+    }
+
+    set distanceFromRadarCenter(radarCenterCoordinates: Coordinates) {
+        this._distanceFromRadarCenter = getDistanceFromCoordinates({ latitude: this.latitude!, longitude: this.longitude! }, radarCenterCoordinates);
     }
 }

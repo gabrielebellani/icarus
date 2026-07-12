@@ -1,10 +1,12 @@
 import {OpenSkyState} from "../classes/OpenSkyState.ts";
+import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 
-export class OpenSkyService {
+export class OpenSkyService extends ThirdPartyHttpService{
     private readonly key: string|null
-    private host: string = 'https://opensky-network.org/api/'
+    override host = 'https://opensky-network.org/api/'
 
     constructor(key: string|null) {
+        super()
         this.key = key
     }
 
@@ -16,7 +18,13 @@ export class OpenSkyService {
         url.searchParams.set('lamax', boundingBox.lamax.toString())
         url.searchParams.set('lomax', boundingBox.lomax.toString())
 
-        const apiResponse: any = await this.fetchFromOpenSky(url)
+        const apiResponse: any = await this.fetch(
+            url,
+            this.key
+                ? {"Authorization": `Bearer ${this.key}`}
+                : undefined
+        )
+
         if (!apiResponse || !apiResponse.states) {
             return [];
         }
@@ -30,28 +38,5 @@ export class OpenSkyService {
         // }
 
         return apiResponse.states.map((state:any)=> OpenSkyState.fromOpenSkyApi(state)) as OpenSkyState[];
-    }
-
-    private async fetchFromOpenSky(endpoint: string|URL) {
-        let ep = this.host
-        if(endpoint instanceof URL){
-            ep = endpoint.toString()
-        }else{
-            ep = ep.concat(endpoint)
-        }
-        const url = new URL(ep)
-
-        const headers = new Headers()
-        headers.set('Accept', 'application/json')
-        if (this.key) {
-            headers.set('Authorization', `Bearer ${this.key}`)
-        }
-
-        const response = await fetch(url, {headers});
-        if (!response.ok) {
-            throw new Error(`OpenSky API request failed with status ${response.status}`);
-        }
-
-        return await response.json();
     }
 }

@@ -1,13 +1,18 @@
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
+import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 
-export class AdsbLolService {
-    private host: string = 'https://api.adsb.lol/api/'
+export class AdsbLolService extends ThirdPartyHttpService {
+    override host = 'https://api.adsb.lol/api/'
 
     public async fetchFlightsByCallsignAndPosition(flights: {callsign: string, lat: string, lng: string}[]) {
-        const apiResponse: Response = await this.fetchFromAdsbLol(
+        const apiResponse: Response = await this.fetch(
             '0/routeset',
+            {
+                "Content-Type": "application/json",
+                "Referer": "https://api.adsb.lol/docs"
+            },
             'POST',
-            JSON.stringify({planes: flights})
+            JSON.stringify({planes: flights}),
         )
 
         if (!apiResponse.ok) {
@@ -33,30 +38,4 @@ export class AdsbLolService {
         return results
     }
 
-    private async fetchFromAdsbLol(
-        endpoint: string | URL,
-        method: RequestInit['method'] = 'GET',
-        body?: RequestInit['body']
-    ) {
-        let ep = this.host
-        if (endpoint instanceof URL) {
-            ep = endpoint.toString()
-        } else {
-            ep = ep.concat(endpoint)
-        }
-        const url = new URL(ep)
-
-        const headers = new Headers({
-            "accept": "application/json",
-            "content-type": "application/json",
-            // "origin": "https://api.adsb.lol",
-            "referer": "https://api.adsb.lol/docs",
-        })
-
-        return fetch(url, {
-            method,
-            headers,
-            body
-        })
-    }
 }

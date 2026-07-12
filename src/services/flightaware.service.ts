@@ -1,10 +1,12 @@
 import {endOfDay, formatISO, startOfDay, startOfMonth, subMinutes} from "date-fns";
+import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 
-export class FlightawareService {
+export class FlightawareService extends ThirdPartyHttpService {
     private readonly key: string
-    private host: string = 'https://aeroapi.flightaware.com/aeroapi/'
+    override host = 'https://aeroapi.flightaware.com/aeroapi/'
 
     constructor(key: string) {
+        super();
         this.key = key
     }
 
@@ -20,7 +22,7 @@ export class FlightawareService {
         return await this.fetchFromFlightAware(url)
     }
 
-    public async fetchAirportTimetable(code: string, start: Date, end: Date, direction: string|null = null) {
+    public async fetchAirportTimetable(code: string, start: Date, end: Date, direction: string | null = null) {
         const endpoint = this.host.concat('airports', '/', code, '/', 'flights', direction ? `/${direction}` : '')
         const url = new URL(endpoint)
         url.searchParams.set('start', formatISO(start))
@@ -29,11 +31,12 @@ export class FlightawareService {
         return await this.fetchFromFlightAware(url);
     }
 
-    public async fetchAirportDelays(code: string) {
-        return await this.fetchFromFlightAware(['airports', '/', code, '/', 'delays'])
-    }
+    // public async fetchAirportDelays(code: string) {
+    //     const url = new URL(this.host.concat('airports', '/', code, '/', 'delays'))
+    //     return await this.fetchFromFlightAware(url)
+    // }
 
-    public async fetchUsage(){
+    public async fetchUsage() {
         const endpoint = this.host.concat('account', '/', 'usage')
         const url = new URL(endpoint)
         const start = formatISO(startOfMonth(new Date()))
@@ -45,20 +48,15 @@ export class FlightawareService {
         return await this.fetchFromFlightAware(url)
     }
 
-    private async fetchFromFlightAware(endpoint: string[]|URL) {
-        let ep = this.host
-        if(endpoint instanceof URL){
-            ep = endpoint.toString()
-        }else{
-            ep = ep.concat(...endpoint)
-        }
-        const url = new URL(ep)
-        const response = await fetch(url, {
-            headers: {
-                'Accept': 'application/json',
+    private async fetchFromFlightAware(endpoint: URL) {
+        const response = await this.fetch(
+            endpoint,
+            {
                 'x-apikey': this.key
-            }
-        });
+            },
+            undefined,
+            undefined,
+        )
 
         return await response.json();
     }

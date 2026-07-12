@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import { db } from '../index.ts';
-import { PreferenceKeyEnum } from '../enums/PreferenceKeyEnum.ts';
-import { signAccessToken, signRefreshToken, verifyToken, type TokenPayload } from '../utils/jwt.ts';
-import { jsonResponse } from '../utils/response.ts';
-import { authenticate, isAuthError } from '../middleware/auth.ts';
+import {z} from 'zod';
+import {db} from '../index.ts';
+import {PreferenceKeyEnum} from '../enums/PreferenceKeyEnum.ts';
+import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from '../utils/jwt.ts';
+import {jsonResponse} from '../utils/response.ts';
+import {authenticate, isAuthError} from '../middleware/auth.ts';
 import {env} from "../utils/env.ts";
 import {getPreference} from "./preferences.controller.ts";
 
@@ -62,7 +62,7 @@ export async function registerUser(request: Request): Promise<Response> {
     return jsonResponse(tokens, 201);
 }
 
-// ─── Init User (primo accesso) ────────────────────────────────────────────────
+// ─── Init User (first access) ────────────────────────────────────────────────
 
 export async function userRequiresInit(request: Request): Promise<Response> {
     const auth = await authenticate(request)

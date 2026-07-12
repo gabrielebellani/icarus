@@ -1,7 +1,8 @@
 import {env} from "../utils/env.ts";
+import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 
-export class JetapiScraperService {
-    private host: string = env.JETAPI_SCRAPER_URL.concat('/api')
+export class JetapiScraperService extends ThirdPartyHttpService{
+    override host = env.JETAPI_SCRAPER_URL.concat('/api')
 
     public async fetchImagesForAircraft(registration: string): Promise<string | null> {
         const url = new URL(this.host)
@@ -9,7 +10,7 @@ export class JetapiScraperService {
         url.searchParams.set('photos', '1') //returns only one image
         url.searchParams.set('only_jp', 'true') //returns only images and no flights/aircraft data
 
-        const apiResponse: Response = await this.fetchFromJetapi(url)
+        const apiResponse: Response = await this.fetch(url)
         const body: any = await apiResponse.json()
 
         if(apiResponse.ok){
@@ -21,18 +22,4 @@ export class JetapiScraperService {
         return null
     }
 
-    private async fetchFromJetapi(endpoint: string | URL) {
-        let ep = this.host
-        if (endpoint instanceof URL) {
-            ep = endpoint.toString()
-        } else {
-            ep = ep.concat(endpoint)
-        }
-        const url = new URL(ep)
-
-        const headers = new Headers()
-        headers.set('Accept', 'application/json')
-
-        return await fetch(url, {headers});
-    }
 }
