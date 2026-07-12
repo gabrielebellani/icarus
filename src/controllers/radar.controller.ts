@@ -2,24 +2,11 @@ import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {verifyToken} from "../utils/jwt.ts";
 import {z} from "zod";
 import {jsonResponse} from "../utils/response.ts";
-import {getFlightawareKey, getOpenSkyKey} from "../utils/third_party.ts";
-import {db} from "../index.ts";
-import {getBoundingBox, RADAR_INACTIVITY_TIMEOUT_S, RADAR_REFRESH_INTERVAL_S} from "../utils/radar.util.ts";
-import {RadarInstance} from "../classes/RadarInstance.ts";
-import {OpenSkyService} from "../services/opensky.service.ts";
+import {getOpenSkyKey} from "../utils/third_party.ts";
+import {RADAR_INACTIVITY_TIMEOUT_S, RADAR_REFRESH_INTERVAL_S} from "../utils/radar.util.ts";
 import type {ServerWebSocket} from "bun";
-import {redis} from "bun"
-import type {OpenSkyState} from "../classes/OpenSkyState.ts";
-import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
-import {AdsbLolService} from "../services/adsbLol.service.ts";
-import {FlightawareService} from "../services/flightaware.service.ts";
-import {AircraftTypeEnum, DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
-import {RadarSingleAircraft} from "../classes/RadarSingleAircraft.ts";
-import {differenceInSeconds, endOfToday, startOfToday} from "date-fns";
-import {AircraftInfo} from "../classes/AircraftInfo.ts";
-import {AdsbdbService} from "../services/adsbdb.service.ts";
-import type {Coordinates} from "../utils/Coordinates.ts";
-import {JetapiScraperService} from "../services/jetapiScraper.service.ts";
+import {RadarRepository} from "../repositories/radar.repository.ts";
+import {RadarDataService} from "../services/radarData.service.ts";
 
 const startRadarSchema = z.object({
     coordinates: z.object({
@@ -48,6 +35,7 @@ export async function startTracking(request: Request) {
 
     const radarData = {
         uuid: crypto.randomUUID(),
+        userId: userId,
         name: parsed.data.name || `Radar ${new Date().toLocaleString()}`,
         coordinates: parsed.data.coordinates,
         radius: parsed.data.radius,
@@ -59,23 +47,9 @@ export async function startTracking(request: Request) {
         created_at: Date.now(),
     }
 
-    db.prepare(`
-        INSERT INTO radars (id, user_id, name, coordinates, radius, expiration, refresh_interval, inactivity_timeout,
-                            created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-        radarData.uuid,
-        userId,
-        radarData.name,
-        JSON.stringify(radarData.coordinates),
-        radarData.radius,
-        radarData.expiration,
-        radarData.refresh_interval,
-        radarData.inactivity_timeout,
-        radarData.created_at
-    );
+    RadarRepository.createRadar(radarData);
 
-    return jsonResponse(getRadarByIdAndUser(radarData.uuid, userId), 201);
+    return jsonResponse(RadarRepository.getRadarByIdAndUser(radarData.uuid, userId), 201);
 }
 
 export async function getTrackingRadars(request: Request) {
@@ -83,9 +57,7 @@ export async function getTrackingRadars(request: Request) {
     if (isAuthError(auth)) return auth;
 
     const userId = auth.user_id;
-
-    const radarRows = db.prepare('SELECT * FROM radars WHERE user_id = ?').all(userId) as any[];
-    const radars = radarRows.map(row => RadarInstance.fromDbRow(row));
+    const radars = RadarRepository.getAllRadarsByUser(userId);
 
     return jsonResponse(radars);
 }
@@ -96,7 +68,7 @@ export async function getSingleTrackingRadar(request: Request, radarId: string) 
 
     const userId = auth.user_id;
 
-    const radar = getRadarByIdAndUser(radarId, userId);
+    const radar = RadarRepository.getRadarByIdAndUser(radarId, userId);
     if (!radar) {
         return jsonResponse({error: 'Radar not found'}, 404);
     }
@@ -115,13 +87,12 @@ export async function terminateTracking(request: Request, radarId: string) {
 
     const userId = auth.user_id;
 
-    const radar = getRadarByIdAndUser(radarId, userId);
+    const radar = RadarRepository.getRadarByIdAndUser(radarId, userId);
     if (!radar) {
         return jsonResponse({error: 'Radar not found'}, 404);
     }
 
-    db.prepare('DELETE FROM radars WHERE id = ? AND user_id = ?').run(radarId, userId);
-
+    RadarRepository.deleteRadar(radarId, userId);
     return new Response()
 }
 
@@ -131,17 +102,28 @@ export async function resumeRadar(request: Request, radarId: string) {
 
     const userId = auth.user_id;
 
-    const radar = getRadarByIdAndUser(radarId, userId);
+    const radar = RadarRepository.getRadarByIdAndUser(radarId, userId);
     if (!radar) {
         return jsonResponse({error: 'Radar not found'}, 404);
     }
 
-    //TODO: implement
+    //TODO: implementare
 
     return new Response()
 }
 
-//live radar websocket handler
+/**
+ * Websocket live refresh handler
+ *
+ * Flow:
+ * 1. Verifies JWT token
+ * 2. Load user requested radar
+ * 4. Fetches initial data and then keeps waiting for the next refresh (refresh_interval)
+ *
+ * Each refresh contains:
+ * - aircraft: max 5 aircraft inside radar range with route, airline and aircraft information (if applicable)
+ * - openSkyDailyUsage: request made to OpenSky API between today 00:00 and current time
+ */
 export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
     let userId: number;
     try {
@@ -152,7 +134,7 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
         return;
     }
 
-    const radarInstance = getRadarByIdAndUser(radarId, userId);
+    const radarInstance = RadarRepository.getRadarByIdAndUser(radarId, userId);
     if (!radarInstance) {
         ws.close(1008, 'Radar not found');
         return;
@@ -160,10 +142,17 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
 
     console.log(`[websocket] Radar ${radarId} connection established.`);
 
+    const openSkyKey = getOpenSkyKey(userId);
+
     const computeRefresh = async () => {
         return JSON.stringify({
-            aircraft: await getFlightsInArea(radarInstance.coordinates, radarInstance.radius, userId),
-            openSkyDailyUsage: await trackOpenSkyRequestsCount(userId)
+            aircraft: await RadarDataService.getFlightsInArea(
+                radarInstance.coordinates,
+                radarInstance.radius,
+                userId,
+                openSkyKey
+            ),
+            openSkyDailyUsage: 1
         })
     }
 
@@ -176,232 +165,4 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
             ws.send(await computeRefresh())
         }
     }, radarInstance.refreshIntervalMs);
-}
-
-export async function getFlightsInArea(coordinates: Coordinates, radius: number, userId: number) {
-    const bbox = getBoundingBox(coordinates.latitude, coordinates.longitude, radius)
-
-    const openskyNetworkKey = getOpenSkyKey(userId);
-
-    const openSkyService = new OpenSkyService(openskyNetworkKey);
-    const aircraftInArea = await openSkyService.fetchAircraftInArea(bbox)
-
-    const prioritizedAircraft = getPrioritizedAircraft(aircraftInArea, userId).slice(0, 5)
-    return await getFlightsInfo(prioritizedAircraft, userId)
-}
-
-function getRadarByIdAndUser(radarId: string, userId: number) {
-    const radarRow = db.prepare('SELECT * FROM radars WHERE id = ? AND user_id = ?').get(radarId, userId);
-    if (!radarRow) {
-        return null;
-    }
-    return RadarInstance.fromDbRow(radarRow);
-}
-
-async function getFlightsInfo(statesInArea: OpenSkyState[], userId: number) {
-
-    const fallbackAdsbLol = async (states: OpenSkyState[]) => {
-        const adsblolService = new AdsbLolService();
-        const objs = states.map(e => ({
-            callsign: e.callsign,
-            lat: e.latitude,
-            lng: e.longitude
-        }))
-
-        try {
-            return await adsblolService.fetchFlightsByCallsignAndPosition(objs as unknown as {
-                callsign: string,
-                lat: string,
-                lng: string
-            }[]);
-        } catch (e) {
-            console.error(e)
-            return []
-        }
-    }
-
-    const fallbackFlightSearch = async (callsign: string) => {
-        const flightAwareKey = getFlightawareKey(userId);
-        if (!flightAwareKey) {
-            return null;
-        }
-        const flightawareService = new FlightawareService(flightAwareKey);
-        const flightInfo = await flightawareService.fetchFlightInfo(callsign, new Date());
-
-        if (flightInfo.flights.length === 0) {
-            return null
-        }
-
-        const flight = flightInfo.flights[0]
-
-        if (!flight) {
-            return null;
-        }
-
-        return RadarCommercialFlight.buildFromFlightAwareResult(callsign, flight)
-    }
-
-    //get available routes from database
-    const validCallsigns = statesInArea.map(s => s.callsign).filter(c => c !== null)
-    const persistedRoutes = getPersistedRoutes(validCallsigns)
-
-    const nonPersistedCallsigns = validCallsigns.filter(c => !persistedRoutes.find(r => r.callsign === c))
-    const nonPersistedStates = statesInArea.filter(c => c.callsign && nonPersistedCallsigns.includes(c.callsign))
-    const adsbLolFetched = nonPersistedStates.length > 0
-        ? await fallbackAdsbLol(nonPersistedStates)
-        : []
-
-    const aircraftsToDisplay: RadarSingleAircraft[] = []
-
-    for (const stateInArea of statesInArea) {
-        const callsign = stateInArea.callsign
-        //if it doesn't have a callsign return only adsb data, else get route information
-        if (!callsign) {
-            aircraftsToDisplay.push(
-                new RadarSingleAircraft(
-                    stateInArea,
-                    null,
-                    await getAircraftInformation(stateInArea.icao24)
-                )
-            )
-            continue
-        }
-
-        //search the callsign between the persisted routes
-        let routeInfo = persistedRoutes.find(r => r.callsign === callsign) ?? null
-
-        if (!routeInfo) {
-            const adsbLolRoute = adsbLolFetched.find(r => r.callsign === callsign)
-            if (adsbLolRoute && adsbLolRoute.route && adsbLolRoute.plausible) {
-                routeInfo = adsbLolRoute.route
-            } else if (adsbLolRoute && adsbLolRoute.route === null) {
-                //fallback on flightaware
-                routeInfo = await fallbackFlightSearch(adsbLolRoute.callsign)
-            }
-        }
-
-        //if not found, return an unknown flight to save future calls to external APIs
-        if (!routeInfo) {
-            routeInfo = new RadarCommercialFlight(
-                callsign,
-                null,
-                null,
-                null,
-                'unknown'
-            )
-        }
-
-        persistRoute(routeInfo)
-            .catch((e) => {
-                console.error(e)
-            })
-
-        aircraftsToDisplay.push(
-            new RadarSingleAircraft(
-                stateInArea,
-                routeInfo,
-                await getAircraftInformation(stateInArea.icao24)
-            )
-        )
-    }
-
-    return aircraftsToDisplay;
-}
-
-function getPersistedRoutes(callsigns: string[]): RadarCommercialFlight[] {
-    return db.query('SELECT * FROM cached_routes WHERE callsign IN(?)')
-        .all(callsigns.toString())
-        .map((row: any) => RadarCommercialFlight.buildFromPersistedRecord(row))
-}
-
-async function persistRoute(flight: RadarCommercialFlight) {
-    db.prepare(
-        `INSERT INTO cached_routes (callsign, origin_icao, origin_iata, destination_icao, destination_iata, airline)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT (callsign) DO UPDATE SET origin_icao      = excluded.origin_icao,
-                                              origin_iata      = excluded.origin_iata,
-                                              destination_icao = excluded.destination_icao,
-                                              destination_iata = excluded.destination_iata,
-                                              airline          = excluded.airline`
-    ).run(
-        flight.callsign,
-        flight.routeInfo?.origin?.icao ?? null,
-        flight.routeInfo?.origin?.iata ?? null,
-        flight.routeInfo?.destination?.icao ?? null,
-        flight.routeInfo?.destination?.iata ?? null,
-        flight.routeInfo?.airline?.iata ?? null,
-    );
-}
-
-function getPrioritizedAircraft(flights: OpenSkyState[], userId: number) {
-    //todo: customizable order
-    const priority = DefaultAircraftTypeDisplayPriority
-    const prioritizedFlights: OpenSkyState[] = []
-
-    for (const aircraftTypeEnum of priority) {
-        const filteredFlights = flights.filter(
-            (flight: OpenSkyState) =>
-                flight.aircraft_type === aircraftTypeEnum
-                || (
-                    flight.aircraft_type > AircraftTypeEnum.Others
-                    && flight.aircraft_type < AircraftTypeEnum.SpecialTypesMinimum
-                )
-        )
-        prioritizedFlights.push(...filteredFlights)
-    }
-    return prioritizedFlights
-}
-
-async function trackOpenSkyRequestsCount(userId: number) {
-    const unixToday = startOfToday().getTime()
-    const todayKey = 'opensky_daily_requests_count:'.concat(userId.toString(), ':', unixToday.toString())
-    let dailyCount = await redis.get(todayKey)
-
-    if (dailyCount) {
-        await redis.incr(todayKey)
-    } else {
-        const diffToEndOfToday = differenceInSeconds(endOfToday(), new Date().getTime())
-        dailyCount = '1'
-        await redis.setex(todayKey, diffToEndOfToday, dailyCount)
-    }
-
-    return Number(dailyCount)
-}
-
-async function getAircraftInformation(icao24: string): Promise<AircraftInfo | null> {
-
-    const fromDB = getPersistedAircraft(icao24)
-
-    if (fromDB) {
-        return AircraftInfo.buildFromPersistedRecord(fromDB)
-    }
-
-    const aircraftInfo = await new AdsbdbService().fetchAircraftInformationByIcao24(icao24)
-
-    if(!aircraftInfo?.cover_url && aircraftInfo?.registration){
-        aircraftInfo.cover_url = await new JetapiScraperService().fetchImagesForAircraft(aircraftInfo?.registration)
-    }
-
-    persistAircraftInfo(icao24, aircraftInfo)
-        .catch((e) => {
-            console.error(e)
-        })
-
-    return aircraftInfo
-}
-
-function getPersistedAircraft(icao24: string) {
-    return db.query('SELECT * FROM cached_icao24 WHERE icao24 = ?')
-        .get(icao24)
-}
-
-async function persistAircraftInfo(icao24: string, aircraftInfo: AircraftInfo | null) {
-    db.prepare(`INSERT INTO cached_icao24 (icao24, data)
-                VALUES (?, ?)
-                ON CONFLICT (icao24) DO UPDATE SET data = excluded.data
-    `)
-        .run(
-            icao24,
-            aircraftInfo ? aircraftInfo.serialize() : null
-        )
 }
