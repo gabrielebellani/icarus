@@ -25,7 +25,7 @@ export class OpenSkyService extends ThirdPartyHttpService{
                 : undefined
         )
 
-        if (!apiResponse || !apiResponse.states) {
+        if (!apiResponse || !apiResponse.content.states) {
             return [];
         }
 
@@ -37,6 +37,6 @@ export class OpenSkyService extends ThirdPartyHttpService{
         //     ]
         // }
 
-        return apiResponse.states.map((state:any)=> OpenSkyState.fromOpenSkyApi(state)) as OpenSkyState[];
+        return apiResponse.content.states.map((state:any)=> OpenSkyState.fromOpenSkyApi(state)) as OpenSkyState[];
     }
 }

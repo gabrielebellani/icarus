@@ -13,8 +13,8 @@ export class JetapiScraperService extends ThirdPartyHttpService{
         const apiResponse: ThirdPartyHttpServiceResponse = <ThirdPartyHttpServiceResponse>await this.fetch(url)
 
         if(apiResponse.ok){
-            if(!!apiResponse.content.response.Images && apiResponse.content.response.Images.length > 0 ){
-                return apiResponse.content.response.Images[0].Image
+            if(!!apiResponse.content.Images && apiResponse.content.Images.length > 0 ){
+                return apiResponse.content.Images[0].Image
             }
         }
 
