@@ -147,8 +147,7 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
     const computeRefresh = async () => {
         return JSON.stringify({
             aircraft: await RadarDataService.getFlightsInArea(
-                radarInstance.coordinates,
-                radarInstance.radius,
+                radarInstance,
                 userId,
                 openSkyKey
             ),

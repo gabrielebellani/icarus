@@ -61,13 +61,13 @@ export class RadarCommercialFlight {
         callsign: string,
         airportOriginCode: string | null,
         destinationAirportCode: string | null,
-        airlineIATA: string | null
+        airlineCode: string | null
     ) {
         return new RadarCommercialFlight(
             callsign,
             getAirportByCode(airportOriginCode),
             getAirportByCode(destinationAirportCode),
-            searchAirline(airlineIATA),
+            searchAirline(airlineCode),
             'matched'
         )
     }

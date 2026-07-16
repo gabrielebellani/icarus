@@ -69,4 +69,14 @@ CREATE TABLE IF NOT EXISTS cached_icao24 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     icao24 VARCHAR(16),
     data JSON NULL
-)
+);
+
+DELETE FROM cached_icao24
+WHERE id NOT IN (
+    SELECT MAX(id)
+    FROM cached_icao24
+    GROUP BY icao24
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cached_icao24_icao24_unique
+ON cached_icao24 (icao24);

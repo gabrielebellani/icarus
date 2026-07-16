@@ -14,6 +14,7 @@ import {getBoundingBox} from "../utils/radar.util.ts";
 import type {OpenSkyState} from "../classes/OpenSkyState.ts";
 import type {Coordinates} from "../utils/Coordinates.ts";
 import {getFlightawareKey} from "../utils/third_party.ts";
+import type {RadarInstance} from "../classes/RadarInstance.ts";
 
 export class RadarDataService {
 
@@ -21,8 +22,7 @@ export class RadarDataService {
      * Actual radar data retrieval implementation
      */
     static async getFlightsInArea(
-        coordinates: Coordinates,
-        radius: number,
+        radar: RadarInstance,
         userId: number,
         openSkyKey: string | null
     ): Promise<RadarSingleAircraft[]> {
@@ -30,11 +30,11 @@ export class RadarDataService {
         //     return [];
         // }
 
-        const bbox = getBoundingBox(coordinates.latitude, coordinates.longitude, radius);
+        const bbox = getBoundingBox(radar.coordinates.latitude, radar.coordinates.longitude, radar.radius);
         const openSkyService = new OpenSkyService(openSkyKey);
         const aircraftInArea = await openSkyService.fetchAircraftInArea(bbox);
 
-        const prioritizedAircraft = this.getPrioritizedAircraft(aircraftInArea, coordinates).slice(0, 5);
+        const prioritizedAircraft = this.getPrioritizedAircraft(aircraftInArea, radar).slice(0, 5);
         return await this.getFlightsInfo(prioritizedAircraft, userId);
     }
 
@@ -221,7 +221,7 @@ export class RadarDataService {
      * Sort adsb aircraft by priority based on type and ascending distance from the radar center coordinates
      * Note: currently OpenSky does not return the correct aircraft type, it always returns 0 (No Info)
      */
-    private static getPrioritizedAircraft(flights: OpenSkyState[], radarCoordinates: Coordinates): OpenSkyState[] {
+    private static getPrioritizedAircraft(flights: OpenSkyState[], radar: RadarInstance): OpenSkyState[] {
         const priority = DefaultAircraftTypeDisplayPriority;
         const prioritizedFlights: OpenSkyState[] = [];
 
@@ -239,9 +239,13 @@ export class RadarDataService {
 
         return prioritizedFlights
             .map(state => {
-                state.distanceFromRadarCenter = radarCoordinates
+                state.distanceFromRadarCenter = radar.coordinates
                 return state
             })
+            .filter(state =>
+                state.distanceFromRadarCenter !== null
+                && state.distanceFromRadarCenter <= (radar.radius * 1000 /* convert to meters */)
+            )
             .sort((a: OpenSkyState, b: OpenSkyState) => {
                 if (a.distanceFromRadarCenter && b.distanceFromRadarCenter) {
                     return a.distanceFromRadarCenter - b.distanceFromRadarCenter
