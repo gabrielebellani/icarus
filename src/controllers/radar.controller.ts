@@ -15,8 +15,8 @@ const startRadarSchema = z.object({
     }),
     radius: z.number().min(5).max(99),
     expiration: z.iso.datetime().nullable(),
-    refresh_interval: z.number().optional(),
-    inactivity_timeout: z.number().optional().nullable(),
+    refresh_interval: z.number().min(30).max(300).optional(),
+    inactivity_timeout: z.enum(["15", "30", "60", "120", "360", "720"]).optional().nullable(), //in minutes
     name: z.string().min(1).max(255).optional(),
 })
 
@@ -43,7 +43,7 @@ export async function startTracking(request: Request) {
         refresh_interval: parsed.data.refresh_interval || RADAR_REFRESH_INTERVAL_S,
         inactivity_timeout: parsed.data.inactivity_timeout === undefined
             ? RADAR_INACTIVITY_TIMEOUT_S
-            : parsed.data.inactivity_timeout, //allows null to disable inactivity timeout
+            : Number(parsed.data.inactivity_timeout) * 60, //allows null to disable inactivity timeout, saved in seconds
         created_at: Date.now(),
     }
 
@@ -142,6 +142,8 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
 
     console.log(`[websocket] Radar ${radarId} connection established.`);
 
+    const date = new Date(); //first refresh date
+
     const openSkyKey = getOpenSkyKey(userId);
 
     const computeRefresh = async () => {
@@ -159,6 +161,15 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
     }
 
     setInterval(async () => {
+        /* check if radar timeout is reached (delta between now and first refresh).
+        radar inactivity_timeout is in seconds
+         */
+        const delta = new Date().getTime() - date.getTime(); //in ms
+        if (radarInstance.inactivity_timeout && delta > (radarInstance.inactivity_timeout * 1000)) {
+            ws.close(1008, 'Radar timeout');
+            return;
+        }
+
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(await computeRefresh())
         }

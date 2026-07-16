@@ -11,14 +11,13 @@ let airlinesData: Airline[] = []
   const mod = await import('../jsons/passenger.icao.min.json')
   airlinesData = mod.default as Airline[]
 
-export function searchAirline(codeOrName: string | null): Airline | null {
-  if(!codeOrName) return null
-  const lowerCaseQuery = codeOrName.toLowerCase()
+export function searchAirline(code: string | null): Airline | null {
+  if(!code) return null
+  const lowerCaseQuery = code.toLowerCase()
 
   return airlinesData.find(airline =>
       airline.iata.toLowerCase() === lowerCaseQuery
       || airline.icao.toLowerCase() === lowerCaseQuery
-      || airline.name.toLowerCase().includes(lowerCaseQuery)
   ) ?? null
 }
 
