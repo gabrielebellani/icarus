@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/nodemailer": "^8.0.1"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -15,6 +16,7 @@
   "dependencies": {
     "date-fns": "^4.3.0",
     "jose": "^6.2.3",
+    "nodemailer": "^9.0.3",
     "zod": "^4.0.0"
   }
 }

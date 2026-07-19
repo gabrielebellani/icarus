@@ -149,7 +149,7 @@ export async function getAirportTimetable(request: Request, id: number){
 
     const airportCode = !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!
     const { direction, start, end } = parsed.data
-    const flightAwareService = new FlightawareService(flightAwareKey)
+    const flightAwareService = new FlightawareService(flightAwareKey, userId)
 
     if(direction === 'in'){
         const arrivals: any = await flightAwareService.fetchAirportTimetable(

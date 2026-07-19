@@ -31,7 +31,7 @@ export class RadarDataService {
         // }
 
         const bbox = getBoundingBox(radar.coordinates.latitude, radar.coordinates.longitude, radar.radius);
-        const openSkyService = new OpenSkyService(openSkyKey);
+        const openSkyService = new OpenSkyService(openSkyKey, userId);
         const aircraftInArea = await openSkyService.fetchAircraftInArea(bbox);
 
         const prioritizedAircraft = this.getPrioritizedAircraft(aircraftInArea, radar).slice(0, 5);
@@ -59,7 +59,7 @@ export class RadarDataService {
 
         // Retrieves routes not persisted in database from ADSB-Lol (* first try *) - bulk retrieval is allowed by API
         const adsbLolFetched = nonPersistedStates.length > 0
-            ? await this.fetchRoutesFromAdsbLol(nonPersistedStates)
+            ? await this.fetchRoutesFromAdsbLol(nonPersistedStates, userId)
             : [];
 
         const aircraftsToDisplay: RadarSingleAircraft[] = [];
@@ -74,7 +74,7 @@ export class RadarDataService {
                     new RadarSingleAircraft(
                         stateInArea,
                         null,
-                        await this.getAircraftInformation(stateInArea.icao24)
+                        await this.getAircraftInformation(stateInArea.icao24, userId)
                     )
                 );
                 continue;
@@ -105,7 +105,7 @@ export class RadarDataService {
                 new RadarSingleAircraft(
                     stateInArea,
                     routeInfo,
-                    await this.getAircraftInformation(stateInArea.icao24)
+                    await this.getAircraftInformation(stateInArea.icao24, userId)
                 )
             );
         }
@@ -145,8 +145,8 @@ export class RadarDataService {
     /**
      * Search route on ADSB-Lol
      */
-    private static async fetchRoutesFromAdsbLol(states: OpenSkyState[]): Promise<any[]> {
-        const adsblolService = new AdsbLolService();
+    private static async fetchRoutesFromAdsbLol(states: OpenSkyState[], userId: number): Promise<any[]> {
+        const adsblolService = new AdsbLolService(userId);
         const objs = states.map(e => ({
             callsign: e.callsign,
             lat: e.latitude,
@@ -178,7 +178,7 @@ export class RadarDataService {
             return null;
         }
 
-        const flightawareService = new FlightawareService(flightAwareKey);
+        const flightawareService = new FlightawareService(flightAwareKey, userId);
         const flightInfo = await flightawareService.fetchFlightInfo(callsign, new Date());
 
         if (!flightInfo.flights.length) {
@@ -192,7 +192,7 @@ export class RadarDataService {
     /**
      * Retrieves aircraft model information
      */
-    private static async getAircraftInformation(icao24: string): Promise<AircraftInfo | null> {
+    private static async getAircraftInformation(icao24: string, userId: number): Promise<AircraftInfo | null> {
         // Search cached data
         const fromDB = RadarRepository.getPersistedAircraft(icao24);
         if (fromDB) {
@@ -200,11 +200,11 @@ export class RadarDataService {
         }
 
         // Fetch from adsbdb
-        const aircraftInfo = await new AdsbdbService().fetchAircraftInformationByIcao24(icao24);
+        const aircraftInfo = await new AdsbdbService(userId).fetchAircraftInformationByIcao24(icao24);
 
         // If adsbdb data doesn't include aircraft image, I try to get one from jetapi service (scraping)
         if (!aircraftInfo?.cover_url && aircraftInfo?.registration) {
-            aircraftInfo.cover_url = await new JetapiScraperService().fetchImagesForAircraft(aircraftInfo.registration);
+            aircraftInfo.cover_url = await new JetapiScraperService(userId).fetchImagesForAircraft(aircraftInfo.registration);
         }
 
         // Persist aircraft information in cache

@@ -1,8 +1,13 @@
 import {env} from "../utils/env.ts";
 import {ThirdPartyHttpService, type ThirdPartyHttpServiceResponse} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
 export class JetapiScraperService extends ThirdPartyHttpService{
     override host = env.JETAPI_SCRAPER_URL.concat('/api')
+
+    constructor(userId: number) {
+        super(ThirdPartyServiceEnum.JETAPI, userId)
+    }
 
     public async fetchImagesForAircraft(registration: string): Promise<string | null> {
         const url = new URL(this.host)

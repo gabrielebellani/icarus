@@ -1,12 +1,13 @@
 import {OpenSkyState} from "../classes/OpenSkyState.ts";
 import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
 export class OpenSkyService extends ThirdPartyHttpService{
     private readonly key: string|null
     override host = 'https://opensky-network.org/api/'
 
-    constructor(key: string|null) {
-        super()
+    constructor(key: string|null, userId: number) {
+        super(ThirdPartyServiceEnum.OPENSKY, userId)
         this.key = key
     }
 

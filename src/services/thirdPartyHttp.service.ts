@@ -1,6 +1,16 @@
+import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
+import {trackApiRequest} from "../utils/apiRequestTracking.util.ts";
+
 export class ThirdPartyHttpService {
 
     protected host: string = ''
+    private readonly service: ThirdPartyServiceEnum
+    private readonly userId: number
+
+    constructor(service: ThirdPartyServiceEnum, userId: number) {
+        this.service = service
+        this.userId = userId
+    }
 
     public async fetch(endpoint: string | URL, headersToAdd?: { [key: string]: string }, method: string = 'GET', body?: any, returnResponse: boolean = false): Promise<ThirdPartyHttpServiceResponse|Response> {
         let ep = this.host
@@ -19,7 +29,14 @@ export class ThirdPartyHttpService {
         }
         headers.set('Accept', 'application/json')
 
-        const response: Response = await fetch(url, {method, body, headers});
+        let response: Response
+        try {
+            response = await fetch(url, {method, body, headers});
+        } finally {
+            // Fire-and-forget: request counting must never delay or affect the caller.
+            trackApiRequest(this.service, this.userId)
+        }
+
         if(returnResponse){
             return response
         }

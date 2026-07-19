@@ -1,8 +1,13 @@
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
 export class AdsbLolService extends ThirdPartyHttpService {
     override host = 'https://api.adsb.lol/api/'
+
+    constructor(userId: number) {
+        super(ThirdPartyServiceEnum.ADSB_LOL, userId)
+    }
 
     public async fetchFlightsByCallsignAndPosition(flights: {callsign: string, lat: string, lng: string}[]) {
         const apiResponse: Response = <Response>await this.fetch(

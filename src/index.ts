@@ -20,7 +20,7 @@ import {
     startTracking as startTrackingAirport,
     terminateTracking as terminateTrackingAirport
 } from "./controllers/airport.controller.ts";
-import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
+import {changePassword, deleteAccount, getApiRequestsUsage} from "./controllers/user.controller.ts";
 import {
     getSingleTrackingRadar,
     getTrackingRadars, refreshRadar,
@@ -133,6 +133,7 @@ Bun.serve({
             "DELETE": async (request) => await deleteAccount(request), //TODO: add yaak request
         },
         '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
+        '/api/user/api_requests': async (request) => getApiRequestsUsage(request), //TODO: add yaak request
         '/*': new Response("Not found", {status: 404}),
     },
     websocket: {

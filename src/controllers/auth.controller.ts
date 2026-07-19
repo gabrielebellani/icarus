@@ -5,7 +5,8 @@ import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from 
 import {jsonResponse} from '../utils/response.ts';
 import {authenticate, isAuthError} from '../middleware/auth.ts';
 import {env} from "../utils/env.ts";
-import {getPreference} from "./preferences.controller.ts";
+import {getPreference, getAppPreference} from "./preferences.controller.ts";
+import {sendPasswordResetEmail} from "../utils/email.util.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -42,13 +43,13 @@ export async function registerUser(request: Request): Promise<Response> {
     }
     const { username, password, email } = parsed.data;
 
-    // Controlla se la registrazione è disabilitata (preference del superuser, user_id=1)
+    // Check if registration is disabled (superuser preference, user_id=1)
     const disabledPref = getPreference(PreferenceKeyEnum.DISABLE_REGISTRATION, 1)
     if (disabledPref !== null && disabledPref.value) {
         return jsonResponse({ error: 'Registration is disabled' }, 403);
     }
 
-    // Controlla duplicati
+    // Check duplicates
     const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
     if (existing) {
         return jsonResponse({ error: 'Username already taken' }, 409);
@@ -79,7 +80,6 @@ export async function userRequiresInit(request: Request): Promise<Response> {
 
 const initUserSchema = z.object({
     openSkyNetworkKey: z.string().optional(),
-    openSkyNetworkDailyThreshold: z.int().min(0).optional(),
     flightAwareKey: z.string().optional(),
 });
 
@@ -94,7 +94,7 @@ export async function initUser(request: Request): Promise<Response> {
         return jsonResponse({ errors: parsed.error.issues }, 422);
     }
 
-    // Controlla se già inizializzato
+    // Check if already initialized
     const alreadyInit = db
         .prepare("SELECT id FROM preferences WHERE user_id = ? AND key = ? AND value = ?")
         .get(userId, PreferenceKeyEnum.INITIALIZED, 'true') as { id: number } | null;
@@ -102,12 +102,12 @@ export async function initUser(request: Request): Promise<Response> {
         return jsonResponse({ error: 'User already initialized' }, 409);
     }
 
-    const { openSkyNetworkKey, openSkyNetworkDailyThreshold, flightAwareKey } = parsed.data;
+    const { openSkyNetworkKey, flightAwareKey } = parsed.data;
     const openSkyNetworkKeyIsSet = !!(openSkyNetworkKey && openSkyNetworkKey.length > 0)
 
     const preferencesToInsert: [number, string, string | number | null][] = [
         [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKeyIsSet ? openSkyNetworkKey : null],
-        [userId, PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, openSkyNetworkDailyThreshold ? openSkyNetworkDailyThreshold : (openSkyNetworkKeyIsSet ? 4000 : 400)],
+        [userId, PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, openSkyNetworkKeyIsSet ? 4000 : 400],
         [userId, PreferenceKeyEnum.FLIGHTAWARE_API_KEY, flightAwareKey ? flightAwareKey.length > 0 ? flightAwareKey : null : null],
         [userId, PreferenceKeyEnum.INITIALIZED, 'true'],
     ];
@@ -191,7 +191,13 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
     }
     const { username } = parsed.data;
 
-    const user = db.prepare('SELECT id FROM users WHERE username = ? AND username <> ?').get(username, env.SUPERUSER_USERNAME) as { id: number } | null;
+    // Check if password recovery is available
+    const recoveryAvailablePref = getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE);
+    if (!recoveryAvailablePref || !recoveryAvailablePref.value) {
+        return jsonResponse({ error: 'Password recovery not available, contact the administrator' }, 403);
+    }
+
+    const user = db.prepare('SELECT id, email FROM users WHERE username = ? AND username <> ?').get(username, env.SUPERUSER_USERNAME) as { id: number; email: string } | null;
 
     if (user) {
         const token = crypto.randomUUID();
@@ -199,11 +205,9 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
         db.prepare('UPDATE users SET password_reset_token = ?, password_reset_token_expires_at = ? WHERE id = ?')
             .run(token, expiresAt, user.id);
 
-        // TODO: inviare per email; per ora log su console
-        console.log(`[recovery] Token per "${username}": ${token}`);
+        // Send recovery email
+        await sendPasswordResetEmail(user.email, username, token);
     }
-
-    console.log(user)
 
     return jsonResponse({ message: 'If the user exists, a recovery token has been issued' }, 200);
 }

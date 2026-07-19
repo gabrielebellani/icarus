@@ -1,12 +1,13 @@
 import {endOfDay, formatISO, startOfDay, startOfMonth, subMinutes} from "date-fns";
 import {ThirdPartyHttpService, type ThirdPartyHttpServiceResponse} from "./thirdPartyHttp.service.ts";
+import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
 export class FlightawareService extends ThirdPartyHttpService {
     private readonly key: string
     override host = 'https://aeroapi.flightaware.com/aeroapi/'
 
-    constructor(key: string) {
-        super();
+    constructor(key: string, userId: number) {
+        super(ThirdPartyServiceEnum.FLIGHTAWARE, userId);
         this.key = key
     }
 

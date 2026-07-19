@@ -80,3 +80,13 @@ WHERE id NOT IN (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cached_icao24_icao24_unique
 ON cached_icao24 (icao24);
+
+CREATE TABLE IF NOT EXISTS third_party_api_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    service VARCHAR(32) NOT NULL,
+    user_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    requests INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (service, user_id, date),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
