@@ -46,10 +46,8 @@ services:
       test:
         [
           "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
+          "curl",
+          "-f",
           "http://localhost:3465/api/status",
         ]
       interval: 30s

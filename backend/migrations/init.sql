@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS tracked_airports (
     latitude varchar(255) NULL,
     longitude varchar(255) NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
-    UNIQUE (user_id, iata_code, icao_code, direction)
+    UNIQUE (user_id, iata_code, icao_code)
 );
 
 CREATE TABLE IF NOT EXISTS radars (
