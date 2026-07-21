@@ -1,0 +1,23 @@
+# Development override for backend — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# This keeps the --watch mode and bind-mount for backend development.
+# For frontend development, run locally: cd frontend && bun run dev
+
+services:
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    # Override production image with local build
+    image: icarus-backend:dev
+    # Hot reload during development
+    entrypoint: ["bun", "--watch", "run", "index.ts"]
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    # Port 3465 is only accessible via the icarus network from frontend
+    # To debug directly, uncomment the ports line below:
+    # ports:
+    #   - "3465:3465"
+
