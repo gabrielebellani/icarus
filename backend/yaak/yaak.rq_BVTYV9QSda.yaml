@@ -1,0 +1,39 @@
+type: http_request
+model: http_request
+id: rq_BVTYV9QSda
+createdAt: 2026-05-28T15:42:29.828158
+updatedAt: 2026-06-01T20:49:09.320949
+workspaceId: wk_gdGiKSysPR
+folderId: fl_czabde5n6i
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: ''
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get airports tracking
+sortPriority: 0.0
+url: ${[ host ]}/api/airport/tracking
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: agUrdqn42c
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

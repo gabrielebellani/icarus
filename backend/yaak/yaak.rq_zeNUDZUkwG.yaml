@@ -1,0 +1,47 @@
+type: http_request
+model: http_request
+id: rq_zeNUDZUkwG
+createdAt: 2026-05-29T08:08:28.963488
+updatedAt: 2026-06-01T20:49:46.674300
+workspaceId: wk_gdGiKSysPR
+folderId: fl_czabde5n6i
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: |-
+    {
+      "icao_code": null,
+      "iata_code": "BGY",
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: U5UXcGYzEj
+method: POST
+name: Start airport tracking
+sortPriority: 0.003
+url: ${[ host ]}/api/airport/tracking
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: 0P9RV0qFBW
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

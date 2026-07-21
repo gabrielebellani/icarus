@@ -1,0 +1,28 @@
+type: folder
+model: folder
+id: fl_YtxgwP4QoN
+createdAt: 2026-06-01T20:07:33.962493
+updatedAt: 2026-06-01T20:07:33.962494
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Radar
+sortPriority: -1780344453959.0
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

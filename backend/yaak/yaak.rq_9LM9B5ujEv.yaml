@@ -1,0 +1,38 @@
+type: http_request
+model: http_request
+id: rq_9LM9B5ujEv
+createdAt: 2026-05-27T19:52:29.418518
+updatedAt: 2026-05-27T19:52:57.198308
+workspaceId: wk_gdGiKSysPR
+folderId: fl_RC4TbsTaGz
+authentication: {}
+authenticationType: none
+body:
+  text: ''
+bodyType: null
+description: 'Checks if the authenticated user requires initialization. Requires Authorization: Bearer <access_token>.'
+headers:
+- enabled: true
+  name: ''
+  value: ''
+  id: 90DYdXkFM7
+method: GET
+name: Check Init User is required Copy
+sortPriority: 0.0
+url: ${[ host ]}/api/config
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
