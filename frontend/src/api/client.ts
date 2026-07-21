@@ -150,10 +150,11 @@ export function getWsUrl(path: string): string {
       return replacement
     })
   } else if (API_BASE.startsWith('/')) {
-    // If API_BASE is relative (e.g., "/api"), use backend directly
-    // In development, backend is on localhost:3465
-    wsBase = `ws://${window.location.hostname}:3465`
-    console.debug('[getWsUrl] API_BASE is relative, using backend directly:', wsBase)
+    // If API_BASE is relative (e.g., "/api"), use same origin as the frontend
+    // This works when behind a reverse proxy (nginx) that proxies /api to the backend
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    wsBase = `${protocol}//${window.location.host}`
+    console.debug('[getWsUrl] API_BASE is relative, using same origin:', wsBase)
   } else {
     const err = `Invalid API_BASE format: ${API_BASE}`
     console.error('[getWsUrl]', err)

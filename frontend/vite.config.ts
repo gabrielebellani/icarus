@@ -2,6 +2,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
+import { ICARUS_API_HOST, ICARUS_API_PORT } from './src/environment'
 
 
 // https://vite.dev/config/
@@ -15,8 +16,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3465',
+        target: `${ICARUS_API_HOST}${ICARUS_API_PORT ? `:${ICARUS_API_PORT}` : ''}`,
         changeOrigin: true,
+        ws: true,
       },
     },
   },
