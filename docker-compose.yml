@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Frontend: SPA served via nginx, reverse-proxying /api to backend
+  frontend:
+    image: ghcr.io/gabrielebellani/icarus-frontend:latest
+    container_name: icarus-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - icarus
+    restart: unless-stopped
+
+  # Backend: API server and WebSocket handler
+  backend:
+    image: ghcr.io/gabrielebellani/icarus-backend:latest
+    container_name: icarus-backend
+    environment:
+      PORT: "3465"
+      SUPERUSER_USERNAME: ${SUPERUSER_USERNAME}
+      SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: redis://redis-cache:6379
+      JETAPI_URL: http://jetapi-scraper:8922
+      FRONTEND_URL: ${FRONTEND_URL}
+      DB_PATH: /app/data/icarus-db.sqlite
+      # Optional: SMTP for password recovery emails
+      # SMTP_HOST: ${SMTP_HOST}
+      # SMTP_PORT: ${SMTP_PORT}
+      # SMTP_SECURE: ${SMTP_SECURE}
+      # SMTP_USER: ${SMTP_USER}
+      # SMTP_PASSWORD: ${SMTP_PASSWORD}
+      # SMTP_FROM: ${SMTP_FROM}
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      - redis-cache
+      - jetapi-scraper
+    networks:
+      - icarus
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3465/api/status",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis cache for sessions and temporary data
+  redis-cache:
+    image: redis:8-alpine
+    container_name: icarus-redis
+    networks:
+      - icarus
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # External service: flight tracking data aggregation
+  jetapi-scraper:
+    image: ghcr.io/gabrielebellani/jetapi_scarper_docker:1.0.0
+    container_name: icarus-jetapi
+    networks:
+      - icarus
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  icarus:
+    driver: bridge
