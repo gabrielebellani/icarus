@@ -29,8 +29,9 @@ import {
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
+import {env} from "./utils/env.ts";
 
-export const db = new Database('./icarus-db.sqlite', {create: true});
+export const db = new Database(env.DB_PATH, {create: true});
 
 // Esegui migrazioni
 await runMigrations();
@@ -39,7 +40,7 @@ await runMigrations();
 await bootstrapSuperuser();
 
 Bun.serve({
-    port: "3465",
+    port: env.PORT,
     routes: {
         "/api/status": new Response("OK"),
         '/api/config': (request) => getApplicationPublicConfig(request),
