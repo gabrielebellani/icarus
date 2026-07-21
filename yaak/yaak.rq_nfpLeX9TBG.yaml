@@ -1,0 +1,50 @@
+type: http_request
+model: http_request
+id: rq_nfpLeX9TBG
+createdAt: 2026-06-01T20:07:41.155497
+updatedAt: 2026-06-01T20:15:30.259614
+workspaceId: wk_gdGiKSysPR
+folderId: fl_YtxgwP4QoN
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: |-
+    {
+      "coordinates": {
+        "latitude": 45,
+        "longitude": 9
+      },
+      "radius": 10,
+      "expiration": null,
+      "refresh_interval": 300,
+      "inactivity_timeout": 300,
+      "name": "Lorem ipsum"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: pUNWGGIIIg
+method: POST
+name: Start radar tracking
+sortPriority: 0.0
+url: ${[ host ]}/api/radar/tracking
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

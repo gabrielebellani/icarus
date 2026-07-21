@@ -1,0 +1,34 @@
+type: http_request
+model: http_request
+id: rq_list_user_preferences
+createdAt: 2026-05-27T06:27:24.411053
+updatedAt: 2026-05-27T09:54:21.361268
+workspaceId: wk_gdGiKSysPR
+folderId: fl_2ss5uAFE8U
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3RVkxUGFYTHByeVhRRk4xakpiVmF6ckJiNDROeUJWL29pVGcwSG9IaitwZWovN3ozdUNHS01oQWQ1bkJoM2tTOHMwQXlmWkZlbFJXdktNRnc9PQ') ]}
+authenticationType: bearer
+body: {}
+bodyType: null
+description: Returns the list of all the user preferences (except possible hidden preferences)
+headers: []
+method: GET
+name: Fetch all preferences
+sortPriority: 0.0
+url: ${[ host ]}/api/preferences
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

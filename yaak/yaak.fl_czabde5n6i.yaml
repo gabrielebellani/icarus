@@ -1,0 +1,28 @@
+type: folder
+model: folder
+id: fl_czabde5n6i
+createdAt: 2026-05-28T15:41:28.123663
+updatedAt: 2026-05-28T15:41:43.910652
+workspaceId: wk_gdGiKSysPR
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Airport
+sortPriority: 0.0
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

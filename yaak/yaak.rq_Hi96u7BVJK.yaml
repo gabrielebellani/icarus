@@ -1,0 +1,47 @@
+type: http_request
+model: http_request
+id: rq_Hi96u7BVJK
+createdAt: 2026-05-27T09:54:48.959096
+updatedAt: 2026-05-28T07:20:17.993672
+workspaceId: wk_gdGiKSysPR
+folderId: fl_xFYMdqKrK8
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: ''
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Search flight to track
+sortPriority: 6000.0
+url: ${[ host ]}/api/flight
+urlParameters:
+- enabled: true
+  name: date
+  value: 2026-05-27
+  id: StiftZVIeS
+- enabled: true
+  name: identifier
+  value: LH2222
+  id: 5dWXZpHCsQ
+- enabled: true
+  name: ''
+  value: ''
+  id: nCnab7YcUZ
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0

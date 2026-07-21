@@ -1,0 +1,43 @@
+type: http_request
+model: http_request
+id: rq_mT7DJxZsfo
+createdAt: 2026-05-28T09:07:11.090755
+updatedAt: 2026-05-28T09:07:52.039896
+workspaceId: wk_gdGiKSysPR
+folderId: fl_xFYMdqKrK8
+authentication:
+  token: ${[ secure(value=b64'WUVOQ19lVUUwYXpOdVF3R1ZRdytzaDEyUFVzZ3E5Tms4WldpNHhYaGlXd2ZEVCs5N0FxZzJhV1Q3aXgvcGhQVDFEQzE0citkWkpmNHZvQytBTVVOZzZ2L0VGOVBYUnc9PQ') ]}
+authenticationType: bearer
+body:
+  text: |-
+    {
+      "identifier": "LH2222",
+      "date": "2026-05-27"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: pUNWGGIIIg
+method: POST
+name: Start flight tracking
+sortPriority: 6000.001
+url: ${[ host ]}/api/flight/tracking
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
