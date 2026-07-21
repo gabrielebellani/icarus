@@ -1,3 +1,3 @@
-export const ICARUS_API_HOST = import.meta.env.ICARUS_API_HOST
-export const ICARUS_API_PORT = import.meta.env.ICARUS_API_PORT
+// These are populated by Vite at build time using .env files
+// They're replaced inline by the build process, so import.meta.env access is fine
 export const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL
