@@ -1,0 +1,75 @@
+# =================
+# Frontend (icarus-ui)
+# =================
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+frontend/*.local
+
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+frontend/.idea
+frontend/.DS_Store
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+frontend/.temp-prompts
+
+frontend/.env
+frontend/.env.production
+
+# =================
+# Backend (icarus-server)
+# =================
+backend/node_modules
+
+backend/out
+backend/dist
+backend/*.tgz
+
+backend/coverage
+backend/*.lcov
+
+backend/logs
+backend/_.log
+backend/report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+backend/.env
+backend/.env.development.local
+backend/.env.test.local
+backend/.env.production.local
+backend/.env.local
+
+backend/.eslintcache
+backend/.cache
+backend/*.tsbuildinfo
+
+backend/.idea
+backend/.DS_Store
+
+backend/icarus-db.sqlite
+backend/yaak/
+
+# =================
+# Monorepo root
+# =================
+.DS_Store
+.idea
+.vscode
+*.sw?
+.temp-prompts
+
+# =================
+# Docker
+# =================
+.dockerignore
