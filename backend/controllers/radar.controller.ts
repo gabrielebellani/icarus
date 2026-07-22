@@ -16,7 +16,7 @@ const startRadarSchema = z.object({
     radius: z.number().min(5).max(99),
     expiration: z.iso.datetime().nullable(),
     refresh_interval: z.number().min(30).max(300).optional(),
-    inactivity_timeout: z.enum([15, 30, 60, 120, 360, 720]).optional().nullable(), //in minutes
+    inactivity_timeout: z.enum(["15", "30", "60", "120", "360", "720"]).optional().nullable(), //in minutes
     name: z.string().min(1).max(255).optional(),
 })
 
