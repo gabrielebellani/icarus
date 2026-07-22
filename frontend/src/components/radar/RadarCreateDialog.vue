@@ -71,18 +71,19 @@ const schema = toTypedSchema(
           .min(30, 'Minimum refresh interval is 30 seconds')
           .max(300, 'Maximum refresh interval is 300 seconds'),
       expiration: z.string().optional(),
-      inactivity_timeout: z.coerce.number().int().nullable(),
+      inactivity_timeout: z.string(),
     }),
 )
 
 const {handleSubmit, resetForm} = useForm({
   validationSchema: schema,
+  keepValuesOnUnmount: true,
   initialValues: {
     name: '',
-    radius: 50,
+    radius: 15,
     refresh_interval: 30,
     expiration: '',
-    inactivity_timeout: 30,
+    inactivity_timeout: '30',
   },
 })
 
@@ -116,7 +117,10 @@ const onSubmit = handleSubmit(async (formValues) => {
       radius: formValues.radius,
       refresh_interval: formValues.refresh_interval,
       expiration: formValues.expiration || null,
-      inactivity_timeout: formValues.inactivity_timeout,
+      inactivity_timeout:
+        formValues.inactivity_timeout && formValues.inactivity_timeout !== 'none'
+          ? Number(formValues.inactivity_timeout)
+          : null,
     }
 
     const radar = await createRadarTracking(payload)
@@ -193,7 +197,6 @@ watch(open, (isOpen) => {
                 <Input v-bind="componentField"
                        type="number"
                        placeholder="15"
-                       default="15"
                        min="0"
                        max="99"
                 />
@@ -281,7 +284,6 @@ watch(open, (isOpen) => {
             <FormItem>
               <FormLabel>Inactivity timeout (optional)</FormLabel>
               <Select v-bind="componentField"
-                      :default-value="String(componentField.modelValue)"
                       class="w-full"
               >
                 <FormControl>
@@ -290,7 +292,7 @@ watch(open, (isOpen) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">None (disabled)</SelectItem>
+                  <SelectItem value="none">No timeout</SelectItem>
                   <SelectItem value="15">15 minutes</SelectItem>
                   <SelectItem value="30">30 minutes</SelectItem>
                   <SelectItem value="60">60 minutes</SelectItem>

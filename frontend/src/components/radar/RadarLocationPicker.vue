@@ -31,7 +31,7 @@ const searchResults = ref<GeocodeResult[]>([])
 const showResults = ref(false)
 
 // Geocoding composable
-const { search, isSearching, error: geocodingError } = useGeocoder()
+const { debouncedSearch, isSearching, error: geocodingError } = useGeocoder()
 
 // Current coordinates display (from marker, updated in real time)
 const displayCoordinates = computed(() => {
@@ -99,7 +99,9 @@ async function selectResult(result: GeocodeResult) {
 }
 
 /**
- * Handle search input change (with debounce).
+ * Handle search input change.
+ * The actual geocoding call is debounced via `debouncedSearch` so that
+ * only the last keystroke in a burst of typing triggers a request.
  */
 async function handleSearchInput(query: string) {
   if (!query.trim()) {
@@ -109,8 +111,9 @@ async function handleSearchInput(query: string) {
   }
 
   showResults.value = true
-  const results = await search(query)
-  searchResults.value = results
+  await debouncedSearch(query, (results) => {
+    searchResults.value = results
+  })
 }
 
 /**
