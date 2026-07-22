@@ -41,7 +41,7 @@ services:
           "-f",
           "http://localhost:8921/api/status",
         ]
-      interval: 30s
+      interval: 4s
       timeout: 10s
       retries: 3
 

@@ -23,26 +23,31 @@ import {
 import {changePassword, deleteAccount, getApiRequestsUsage} from "./controllers/user.controller.ts";
 import {
     getSingleTrackingRadar,
-    getTrackingRadars, refreshRadar,
+    getTrackingRadars,
+    refreshRadar,
     resumeRadar,
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
-import type {ServerWebSocket} from "bun";
-import * as Buffer from "node:buffer";
-import {jsonResponse} from "./utils/response.ts";
+import {jsonResponse} from "./utils/response.util.ts";
+import {deleteExpiredRadars} from "./utils/cron.util.ts";
+import {env} from "./utils/env.ts";
 
 export const db = new Database('./icarus-db.sqlite', {create: true});
 export const redis = new RedisClient()
 
-// Esegui migrazioni
+// Execute migrations
 await runMigrations();
 
-// Inizializza superuser da env
+// Initialized superuser from env
 await bootstrapSuperuser();
 
+Bun.cron("0 1 * * *", () => {
+    deleteExpiredRadars();
+});
+
 Bun.serve({
-    port: "3465",
+    port: env.PORT,
     routes: {
         "/api/status": async () => {
             return jsonResponse({
@@ -142,7 +147,7 @@ Bun.serve({
             await refreshRadar(ws.data.id, ws)
         },
         message(ws, message): void | Promise<void> {
-          //do nothing, radar updates are pushed from the server side
+            //do nothing, radar updates are pushed from the server side
         },
         close(ws, code, reason) {
             console.log(`[websocket] Radar ${ws.data.id} connection closed. Code: ${code} ${reason ? ` - Reason: ${reason}` : ''}`);
@@ -150,4 +155,4 @@ Bun.serve({
     }
 })
 
-console.log('[server] In ascolto su http://localhost:8921');
+console.log('[server] In ascolto su http://localhost:' + env.PORT);
