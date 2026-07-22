@@ -1,4 +1,4 @@
-import {jsonResponse} from "../utils/response.ts";
+import {jsonResponse} from "../utils/response.util.ts";
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {z} from "zod";
 import {db} from "../index.ts";

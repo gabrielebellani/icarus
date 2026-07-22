@@ -1,5 +1,5 @@
-import { verifyToken, type TokenPayload } from '../utils/jwt.ts';
-import { jsonResponse } from '../utils/response.ts';
+import { verifyToken, type TokenPayload } from '../utils/jwt.util.ts';
+import { jsonResponse } from '../utils/response.util.ts';
 
 /**
  * Validates Authorization header.

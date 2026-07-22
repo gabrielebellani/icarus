@@ -1,6 +1,5 @@
 import airports from '../jsons/airports.json'
-import type {FlightAirportSuggestion} from './FlightAirportSuggestion'
-import {getCountryNameByCode} from '../utils/countries.util'
+import {getCountryNameByCode} from './countries.util.ts'
 
 export interface Airport {
     iata: string

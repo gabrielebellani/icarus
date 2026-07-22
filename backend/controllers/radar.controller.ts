@@ -1,8 +1,8 @@
 import {authenticate, isAuthError} from "../middleware/auth.ts";
-import {verifyToken} from "../utils/jwt.ts";
+import {verifyToken} from "../utils/jwt.util.ts";
 import {z} from "zod";
-import {jsonResponse} from "../utils/response.ts";
-import {getOpenSkyKey} from "../utils/third_party.ts";
+import {jsonResponse} from "../utils/response.util.ts";
+import {getOpenSkyKey} from "../utils/third_party.util.ts";
 import {RADAR_INACTIVITY_TIMEOUT_S, RADAR_REFRESH_INTERVAL_S} from "../utils/radar.util.ts";
 import type {ServerWebSocket} from "bun";
 import {RadarRepository} from "../repositories/radar.repository.ts";

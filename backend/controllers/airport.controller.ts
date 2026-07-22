@@ -1,10 +1,10 @@
 import {db} from "../index.ts";
 import {TrackedAirport} from "../classes/TrackedAirport.ts";
 import {authenticate, isAuthError} from "../middleware/auth.ts";
-import {jsonResponse} from "../utils/response.ts";
+import {jsonResponse} from "../utils/response.util.ts";
 import {getAirportByCode, searchAirports} from "../utils/airports.util.ts";
 import {z} from "zod";
-import {getFlightawareKey} from "../utils/third_party.ts";
+import {getFlightawareKey} from "../utils/third_party.util.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
 import {addHours, subHours} from "date-fns";
 

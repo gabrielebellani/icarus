@@ -1,8 +1,8 @@
 import {z} from 'zod';
 import {db} from '../index.ts';
 import {PreferenceKeyEnum} from '../enums/PreferenceKeyEnum.ts';
-import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from '../utils/jwt.ts';
-import {jsonResponse} from '../utils/response.ts';
+import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from '../utils/jwt.util.ts';
+import {jsonResponse} from '../utils/response.util.ts';
 import {authenticate, isAuthError} from '../middleware/auth.ts';
 import {env} from "../utils/env.ts";
 import {getPreference, getAppPreference} from "./preferences.controller.ts";

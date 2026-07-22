@@ -11,13 +11,16 @@ function optionalEnv(key: string): string | undefined {
 }
 
 export const env = {
+    get PORT() { return requireEnv('PORT'); },
     get SUPERUSER_USERNAME() { return requireEnv('SUPERUSER_USERNAME'); },
     get SUPERUSER_PASSWORD() { return requireEnv('SUPERUSER_PASSWORD'); },
     get JWT_SECRET() { return requireEnv('JWT_SECRET'); },
     get JETAPI_SCRAPER_URL() { return requireEnv('JETAPI_URL'); },
-    
-    // Password Recovery - Email (optional)
+    get REDIS_URL() { return requireEnv('REDIS_URL'); },
     get FRONTEND_URL() { return optionalEnv('FRONTEND_URL'); },
+    get DB_PATH() { return optionalEnv('DB_PATH') || './icarus-db.sqlite'; },
+
+    // SMTP (optional)
     get SMTP_HOST() { return optionalEnv('SMTP_HOST'); },
     get SMTP_PORT() { return optionalEnv('SMTP_PORT'); },
     get SMTP_SECURE() { return optionalEnv('SMTP_SECURE'); },

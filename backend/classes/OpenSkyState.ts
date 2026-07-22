@@ -1,6 +1,6 @@
 import {AircraftTypeEnum} from "../enums/AircraftTypeEnum.ts";
 import {getDistanceFromCoordinates} from "../utils/radar.util.ts";
-import type {Coordinates} from "../utils/Coordinates.ts";
+import type {Coordinates} from "../types/Coordinates.ts";
 
 export class OpenSkyState {
     icao24: string

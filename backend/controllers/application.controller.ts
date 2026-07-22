@@ -1,7 +1,7 @@
 import {db} from "../index.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {env} from "../utils/env.ts";
-import {jsonResponse} from "../utils/response.ts";
+import {jsonResponse} from "../utils/response.util.ts";
 import {getAppPreference} from "./preferences.controller.ts";
 import {initEmailTransporter} from "../utils/email.util.ts";
 

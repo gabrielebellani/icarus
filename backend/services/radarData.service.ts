@@ -8,12 +8,9 @@ import {AircraftTypeEnum, DefaultAircraftTypeDisplayPriority} from "../enums/Air
 import {RadarSingleAircraft} from "../classes/RadarSingleAircraft.ts";
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {AircraftInfo} from "../classes/AircraftInfo.ts";
-import {differenceInSeconds, endOfToday, startOfToday} from "date-fns";
-import {redis} from "bun";
 import {getBoundingBox} from "../utils/radar.util.ts";
 import type {OpenSkyState} from "../classes/OpenSkyState.ts";
-import type {Coordinates} from "../utils/Coordinates.ts";
-import {getFlightawareKey} from "../utils/third_party.ts";
+import {getFlightawareKey} from "../utils/third_party.util.ts";
 import type {RadarInstance} from "../classes/RadarInstance.ts";
 
 export class RadarDataService {

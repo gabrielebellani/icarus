@@ -1,4 +1,4 @@
-import type {Coordinates} from "../utils/Coordinates.ts";
+import type {Coordinates} from "../types/Coordinates.ts";
 
 export class RadarInstance {
     id: number

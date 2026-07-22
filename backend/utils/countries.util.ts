@@ -1,5 +1,5 @@
 import countries_codes from '../jsons/countries_codes.json'
-import type { CountryCode } from './CountryCode.ts'
+import type { CountryCode } from '../types/CountryCode.ts'
 
 interface Country {
   name: string

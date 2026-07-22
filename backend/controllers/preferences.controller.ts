@@ -1,10 +1,10 @@
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {db} from "../index.ts";
 import {Preference} from "../classes/Preference.ts";
-import {jsonResponse} from "../utils/response.ts";
+import {jsonResponse} from "../utils/response.util.ts";
 import {type PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
 import {AppPreference} from "../classes/AppPreference.ts";
-import {getFlightawareKey} from "../utils/third_party.ts";
+import {getFlightawareKey} from "../utils/third_party.util.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
 
 export async function getUserPreferences(request: Request) {

@@ -29,7 +29,7 @@ import {
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
-import {jsonResponse} from "./utils/response.util.ts";
+import {jsonResponse} from "./utils/response.ts";
 import {deleteExpiredRadars} from "./utils/cron.util.ts";
 import {env} from "./utils/env.ts";
 
