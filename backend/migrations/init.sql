@@ -54,3 +54,39 @@ CREATE TABLE IF NOT EXISTS radars (
     expired_at DATETIME NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS cached_routes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    callsign VARCHAR(16) UNIQUE,
+    origin_icao VARCHAR(16),
+    origin_iata VARCHAR(16),
+    destination_icao VARCHAR(16),
+    destination_iata VARCHAR(16),
+    airline VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS cached_icao24 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    icao24 VARCHAR(16),
+    data JSON NULL
+);
+
+DELETE FROM cached_icao24
+WHERE id NOT IN (
+    SELECT MAX(id)
+    FROM cached_icao24
+    GROUP BY icao24
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cached_icao24_icao24_unique
+ON cached_icao24 (icao24);
+
+CREATE TABLE IF NOT EXISTS third_party_api_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    service VARCHAR(32) NOT NULL,
+    user_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    requests INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (service, user_id, date),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

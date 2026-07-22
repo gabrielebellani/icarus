@@ -2,9 +2,9 @@ import { verifyToken, type TokenPayload } from '../utils/jwt.ts';
 import { jsonResponse } from '../utils/response.ts';
 
 /**
- * Valida il Bearer token nell'header Authorization.
- * Se valido, restituisce il payload decodificato.
- * Se non valido o assente, restituisce una Response 401.
+ * Validates Authorization header.
+ * If valid, decoded payload is returned.
+ * If missing or invalid, Response 401 is returned.
  */
 export async function authenticate(request: Request): Promise<TokenPayload | Response> {
     const authHeader = request.headers.get('Authorization');
@@ -25,7 +25,7 @@ export async function authenticate(request: Request): Promise<TokenPayload | Res
 }
 
 /**
- * Restituisce true se il valore è una Response (autenticazione fallita).
+ * Returns true if value is Response type (failed authentication).
  */
 export function isAuthError(value: TokenPayload | Response): value is Response {
     return value instanceof Response;

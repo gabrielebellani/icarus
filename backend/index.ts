@@ -1,4 +1,5 @@
 import {Database} from 'bun:sqlite';
+import {RedisClient} from "bun"
 import runMigrations from './migrations/migrations.ts';
 import {bootstrapSuperuser, getApplicationPublicConfig} from './controllers/application.controller.ts';
 import {
@@ -13,25 +14,26 @@ import {
 import {getThirdPartyAPIUsage, getUserPreferences, setUserPreferences} from "./controllers/preferences.controller.ts";
 import {getTrackingFlight, searchFlight, startTracking, terminateTracking} from "./controllers/flight.controller.ts";
 import {
-    getAirportDelays,
     getAirportTimetable,
     getTrackingAirports,
     searchAirport,
-    terminateTracking as terminateTrackingAirport,
-    startTracking as startTrackingAirport
+    startTracking as startTrackingAirport,
+    terminateTracking as terminateTrackingAirport
 } from "./controllers/airport.controller.ts";
-import {changePassword, deleteAccount} from "./controllers/user.controller.ts";
+import {changePassword, deleteAccount, getApiRequestsUsage} from "./controllers/user.controller.ts";
 import {
-    getFlightsInArea,
     getSingleTrackingRadar,
-    getTrackingRadars,
+    getTrackingRadars, refreshRadar,
     resumeRadar,
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
-import {env} from "./utils/env.ts";
+import type {ServerWebSocket} from "bun";
+import * as Buffer from "node:buffer";
+import {jsonResponse} from "./utils/response.ts";
 
-export const db = new Database(env.DB_PATH, {create: true});
+export const db = new Database('./icarus-db.sqlite', {create: true});
+export const redis = new RedisClient()
 
 // Esegui migrazioni
 await runMigrations();
@@ -40,9 +42,15 @@ await runMigrations();
 await bootstrapSuperuser();
 
 Bun.serve({
-    port: env.PORT,
+    port: "3465",
     routes: {
-        "/api/status": new Response("OK"),
+        "/api/status": async () => {
+            return jsonResponse({
+                status: "ok",
+                database: db.query("SELECT 1") ? "connected" : "error",
+                redis: await redis.ping() ? "connected" : "error",
+            })
+        },
         '/api/config': (request) => getApplicationPublicConfig(request),
         '/api/auth/init': {
             "GET": async (request) => await userRequiresInit(request),
@@ -95,13 +103,51 @@ Bun.serve({
             "DELETE": async (request) => await terminateTrackingRadar(request, String(request.params.id)),
             "PUT": async (request) => await resumeRadar(request, String(request.params.id)),
         },
+        '/api/radar/open/:id': async (request, server) => {
+            let token: string | null = null;
+
+            // Prova prima dall'header Authorization (REST client)
+            const authHeader = request.headers.get('Authorization');
+            if (authHeader?.startsWith('Bearer ')) {
+                token = authHeader.slice(7);
+            }
+
+            // Se non c'è, prova dal query parameter (WebSocket browser/client, Yaak)
+            if (!token) {
+                const url = new URL(request.url);
+                token = url.searchParams.get('token');
+            }
+
+            if (!token) {
+                return jsonResponse({ error: 'Missing token' }, 401);
+            }
+
+            if (server.upgrade(request, { data: { id: String(request.params.id), token } })) {
+                return;
+            }
+
+            return new Response("Upgrade failed", {status: 500});
+        },
         '/api/user/password': async (request) => await changePassword(request), //TODO: add yaak request
         '/api/user': {
             "DELETE": async (request) => await deleteAccount(request), //TODO: add yaak request
         },
         '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
+        '/api/user/api_requests': async (request) => getApiRequestsUsage(request), //TODO: add yaak request
         '/*': new Response("Not found", {status: 404}),
     },
+    websocket: {
+        data: {} as { id: string, token: string },
+        async open(ws) {
+            await refreshRadar(ws.data.id, ws)
+        },
+        message(ws, message): void | Promise<void> {
+          //do nothing, radar updates are pushed from the server side
+        },
+        close(ws, code, reason) {
+            console.log(`[websocket] Radar ${ws.data.id} connection closed. Code: ${code} ${reason ? ` - Reason: ${reason}` : ''}`);
+        },
+    }
 })
 
 console.log('[server] In ascolto su http://localhost:8921');

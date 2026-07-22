@@ -149,7 +149,7 @@ export async function getAirportTimetable(request: Request, id: number){
 
     const airportCode = !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!
     const { direction, start, end } = parsed.data
-    const flightAwareService = new FlightawareService(flightAwareKey)
+    const flightAwareService = new FlightawareService(flightAwareKey, userId)
 
     if(direction === 'in'){
         const arrivals: any = await flightAwareService.fetchAirportTimetable(
@@ -194,31 +194,31 @@ export async function getAirportTimetable(request: Request, id: number){
     return jsonResponse(responseData)
 }
 
-export async function getAirportDelays(request: Request, id: number){
-    const auth = await authenticate(request)
-    if (isAuthError(auth)) return auth;
-
-    const userId = auth.user_id
-    const trackedAirport = getTrackedAirportById(userId, id)
-
-    if(trackedAirport === null){
-        return jsonResponse({error: "Tracking not found"}, 404)
-    }
-
-    if(trackedAirport.icao_code === null && trackedAirport.iata_code === null){
-        return jsonResponse({error: "Tracked airport has no valid ICAO or IATA code."}, 400)
-    }
-
-    const flightAwareKey = getFlightawareKey(userId)
-    if (flightAwareKey === null) {
-        return jsonResponse({error: "Flightaware API key is missing."}, 400)
-    }
-
-    const flightAwareService = new FlightawareService(flightAwareKey)
-    const delays = await flightAwareService.fetchAirportDelays(!!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!)
-
-    return jsonResponse(delays)
-}
+// export async function getAirportDelays(request: Request, id: number){
+//     const auth = await authenticate(request)
+//     if (isAuthError(auth)) return auth;
+//
+//     const userId = auth.user_id
+//     const trackedAirport = getTrackedAirportById(userId, id)
+//
+//     if(trackedAirport === null){
+//         return jsonResponse({error: "Tracking not found"}, 404)
+//     }
+//
+//     if(trackedAirport.icao_code === null && trackedAirport.iata_code === null){
+//         return jsonResponse({error: "Tracked airport has no valid ICAO or IATA code."}, 400)
+//     }
+//
+//     const flightAwareKey = getFlightawareKey(userId)
+//     if (flightAwareKey === null) {
+//         return jsonResponse({error: "Flightaware API key is missing."}, 400)
+//     }
+//
+//     const flightAwareService = new FlightawareService(flightAwareKey)
+//     const delays = await flightAwareService.fetchAirportDelays(!!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!)
+//
+//     return jsonResponse(delays)
+// }
 
 function getTrackedAirports(userId: number): (TrackedAirport | null)[] {
     return db.prepare("SELECT * FROM tracked_airports WHERE user_id = ?")

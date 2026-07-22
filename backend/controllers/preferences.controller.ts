@@ -63,7 +63,7 @@ export async function getThirdPartyAPIUsage(request: Request) {
         return jsonResponse({error: "Flightaware API key is missing."}, 400)
     }
 
-    const flightAwareService = new FlightawareService(flightAwareKey)
+    const flightAwareService = new FlightawareService(flightAwareKey, userId)
     const usage: any = await flightAwareService.fetchUsage()
 
     return jsonResponse({

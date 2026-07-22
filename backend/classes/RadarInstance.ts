@@ -1,6 +1,8 @@
+import type {Coordinates} from "../utils/Coordinates.ts";
+
 export class RadarInstance {
     id: number
-    coordinates: { latitude: number, longitude: number }
+    coordinates: Coordinates
     radius: number
     expiration: Date | null
     refresh_interval: number
@@ -12,7 +14,7 @@ export class RadarInstance {
 
     constructor(
         id: number,
-        coordinates: { latitude: number, longitude: number },
+        coordinates: Coordinates,
         radius: number,
         expiration: Date | null,
         refresh_interval: number,
@@ -52,5 +54,13 @@ export class RadarInstance {
             row.timeout_at ? new Date(row.timeout_at) : null,
             row.expired_at ? new Date(row.expired_at) : null,
         )
+    }
+
+    get refreshIntervalMs(): number {
+        return this.refresh_interval * 1000;
+    }
+
+     get inactivityTimeoutMs(): number | null {
+        return this.inactivity_timeout !== null ? this.inactivity_timeout * 1000 : null;
     }
 }

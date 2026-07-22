@@ -45,7 +45,7 @@ export async function searchFlight(request: Request) {
         return jsonResponse({error: "Flightaware API key is missing."}, 400)
     }
 
-    const flightAwareService = new FlightawareService(flightAwareKey)
+    const flightAwareService = new FlightawareService(flightAwareKey, userId)
     return jsonResponse(await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date)))
 }
 
@@ -81,8 +81,8 @@ export async function startTracking(request: Request){
         return jsonResponse({error: "Flightaware API key is missing."}, 400)
     }
 
-    const flightAwareService = new FlightawareService(flightAwareKey)
-    const flightInfo: any = await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date))
+    const flightAwareService = new FlightawareService(flightAwareKey, userId)
+    const flightInfo = await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date))
 
     if(flightInfo.flights.length === 0){
         return jsonResponse({error: "Flight not found"}, 404)
