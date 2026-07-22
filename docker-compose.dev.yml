@@ -16,8 +16,8 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    # Port 3465 is only accessible via the icarus network from frontend
+    # Port 8921 is only accessible via the icarus network from frontend
     # To debug directly, uncomment the ports line below:
     # ports:
-    #   - "3465:3465"
+    #   - "8921:8921"
 

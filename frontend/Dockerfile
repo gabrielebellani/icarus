@@ -12,14 +12,12 @@ COPY . .
 RUN bun run build
 
 # Production stage
-FROM nginx:alpine
+FROM caddy:2-alpine
 
 # Copy the built SPA from the builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /srv
 
-# Copy custom nginx configuration
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom Caddy configuration
+COPY docker/Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]

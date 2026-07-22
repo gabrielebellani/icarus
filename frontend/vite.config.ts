@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: `${process.env.ICARUS_API_HOST || 'http://localhost'}${process.env.ICARUS_API_PORT ? `:${process.env.ICARUS_API_PORT}` : ':3465'}`,
+        target: `${process.env.ICARUS_API_HOST || 'http://localhost'}${process.env.ICARUS_API_PORT ? `:${process.env.ICARUS_API_PORT}` : ':8921'}`,
         changeOrigin: true,
         ws: true,
       },

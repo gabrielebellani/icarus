@@ -1,0 +1,31 @@
+# Caddy configuration for Icarus frontend + reverse proxy to backend
+
+{
+	admin off
+}
+
+:80 {
+	root * /srv
+	encode gzip
+
+	# Proxy /api requests to the backend service (WebSocket upgrade handled automatically)
+	# handle is mutually exclusive and evaluated in written order, so this
+	# always wins over the SPA fallback below regardless of directive sorting.
+	handle /api/* {
+		reverse_proxy backend:8921
+	}
+
+	# Everything else: serve the SPA
+	handle {
+		# Versioned/hashed assets (from build): cache for 1 year
+		@static path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+		header @static Cache-Control "public, max-age=31536000, immutable"
+
+		# Default caching for HTML and other non-hashed files
+		header Cache-Control "public, max-age=3600"
+
+		# SPA routing: serve index.html for all non-file requests
+		try_files {path} /index.html
+		file_server
+	}
+}

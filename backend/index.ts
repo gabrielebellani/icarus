@@ -104,4 +104,4 @@ Bun.serve({
     },
 })
 
-console.log('[server] In ascolto su http://localhost:3465');
+console.log('[server] In ascolto su http://localhost:8921');

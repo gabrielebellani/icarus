@@ -1,6 +1,3 @@
-# =================
-# Frontend (icarus-ui)
-# =================
 frontend/logs
 frontend/*.log
 frontend/npm-debug.log*
@@ -28,9 +25,6 @@ frontend/.temp-prompts
 frontend/.env
 frontend/.env.production
 
-# =================
-# Backend (icarus-server)
-# =================
 backend/node_modules
 
 backend/out
@@ -58,18 +52,13 @@ backend/.idea
 backend/.DS_Store
 
 backend/icarus-db.sqlite
-backend/yaak/
 
-# =================
-# Monorepo root
-# =================
 .DS_Store
 .idea
 .vscode
 *.sw?
 .temp-prompts
 
-# =================
-# Docker
-# =================
 .dockerignore
+
+build.sh

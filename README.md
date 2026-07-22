@@ -15,17 +15,17 @@ A modular, Vue 3 + TypeScript web interface for real-time flight tracking with l
 
 ```
 ┌─────────────────────────────────┐
-│   Frontend (nginx + SPA)        │
-│  • Vue 3 + TypeScript + Vite   │
-│  • Tailwind + shadcn-vue       │
-│  • Reverse-proxy to /api       │
+│   Frontend (Caddy + SPA)        │
+│  • Vue 3 + TypeScript + Vite    │
+│  • Tailwind + shadcn-vue        │
+│  • Reverse-proxy to /api        │
 └──────────────┬──────────────────┘
                │
         (same-origin proxy)
                │
 ┌──────────────▼──────────────────┐
 │      Backend (Bun + SQLite)     │
-│  • REST API + WebSocket server │
+│  • REST API + WebSocket server  │
 │  • User authentication          │
 │  • Flight tracking logic        │
 │  • Redis for caching            │
@@ -59,7 +59,6 @@ A modular, Vue 3 + TypeScript web interface for real-time flight tracking with l
 3. **Edit `.env` with your configuration**:
    - Set secure `SUPERUSER_PASSWORD` and `JWT_SECRET`
    - Update `FRONTEND_URL` if accessing from a different hostname/domain
-   - Optional: Configure SMTP for password recovery emails
 
 4. **Start the services**:
    ```bash
@@ -77,11 +76,11 @@ A modular, Vue 3 + TypeScript web interface for real-time flight tracking with l
 | `SUPERUSER_USERNAME` | Yes | `admin` | Initial admin username |
 | `SUPERUSER_PASSWORD` | Yes | - | Initial admin password (change this!) |
 | `JWT_SECRET` | Yes | - | Secret for JWT token signing (min 32 chars) |
-| `FRONTEND_URL` | No | `http://localhost` | Public URL for password recovery emails |
-| `FRONTEND_PORT` | No | `80` | Port to expose the frontend on the host |
-| `DB_PATH` | No | `/app/data/icarus-db.sqlite` | SQLite database path inside container |
-| `REDIS_URL` | No | `redis://redis-cache:6379` | Redis connection URL |
-| `SMTP_*` | No | - | Optional email settings for password recovery |
+| `FRONTEND_URL` | No | `http://localhost` | Public URL for password recovery messages |
+| `FRONTEND_PORT` | No | `8920` | Port to expose the frontend on the host |
+
+> Note: password recovery currently logs the reset token to the backend
+> container logs — email delivery (SMTP) is not implemented yet.
 
 ### Docker Compose in Existing Setup
 
@@ -102,7 +101,7 @@ services:
   icarus-backend:
     image: ghcr.io/gabrielebellani/icarus-backend:latest
     environment:
-      PORT: "3465"
+      PORT: "8921"
       SUPERUSER_USERNAME: admin
       SUPERUSER_PASSWORD: ${ICARUS_PASSWORD}
       JWT_SECRET: ${ICARUS_JWT_SECRET}
@@ -163,7 +162,7 @@ cd backend
 bun install
 bun run index.ts
 ```
-Runs on `http://localhost:3465` with local SQLite and Redis.
+Runs on `http://localhost:8921` with local SQLite and Redis.
 
 ### Project Structure
 
@@ -179,9 +178,9 @@ icarus/
 │   │   ├── types/          # TypeScript types
 │   │   ├── views/          # Page components
 │   │   └── router/         # Vue Router config
-│   ├── Dockerfile          # Multi-stage build (bun + nginx)
+│   Dockerfile          # Multi-stage build (bun + Caddy)
 │   └── docker/
-│       └── nginx.conf      # Reverse proxy config
+│       └── Caddyfile       # Reverse proxy config
 │
 ├── backend/                 # Bun server
 │   ├── controllers/        # Request handlers
@@ -202,16 +201,16 @@ icarus/
 ## Key Technologies
 
 - **Frontend**: Vue 3, TypeScript, Tailwind CSS, shadcn-vue, Leaflet maps, Vite
-- **Backend**: Bun (TypeScript runtime), SQLite, Redis, Nodemailer (email)
-- **Deployment**: Docker, Docker Compose, nginx
-- **Authentication**: JWT tokens, password recovery via email (optional)
+- **Backend**: Bun (TypeScript runtime), SQLite, Redis
+- **Deployment**: Docker, Docker Compose, Caddy
+- **Authentication**: JWT tokens, password recovery (reset token logged server-side)
 
 ## Security Considerations
 
 - **Always** change `SUPERUSER_PASSWORD` and `JWT_SECRET` in production
 - Use strong, random passwords (at least 16 characters)
 - Set `FRONTEND_URL` to your actual domain for password recovery links
-- Consider using a reverse proxy (Traefik, Caddy) in front of nginx for HTTPS/TLS
+- Consider using a reverse proxy (Traefik) in front of Caddy for HTTPS/TLS
 - Keep Docker images updated regularly
 - Monitor logs for suspicious activity
 
@@ -228,7 +227,7 @@ icarus/
 
 ### WebSocket connection fails
 - Check that proxy is configured with `ws: true` (handled automatically)
-- Verify nginx config includes WebSocket upgrade headers
+- Verify the Caddyfile is loaded correctly (Caddy handles WebSocket upgrades automatically)
 - Check Docker network: `docker network inspect icarus`
 
 ### Database file missing or corrupted

@@ -151,7 +151,7 @@ export function getWsUrl(path: string): string {
     })
   } else if (API_BASE.startsWith('/')) {
     // If API_BASE is relative (e.g., "/api"), use same origin as the frontend
-    // This works when behind a reverse proxy (nginx) that proxies /api to the backend
+    // This works when behind a reverse proxy (Caddy) that proxies /api to the backend
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     wsBase = `${protocol}//${window.location.host}`
     console.debug('[getWsUrl] API_BASE is relative, using same origin:', wsBase)
