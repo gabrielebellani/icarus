@@ -60,7 +60,7 @@ const canProceedToStep2 = computed(() => selectedCoordinates.value !== null)
 // Step 2: refresh_interval (required), others optional
 const schema = toTypedSchema(
     z.object({
-      name: z.string().optional(),
+      name: z.string().min(1, 'Name is required'),
       radius: z.coerce
           .number('Radius must be a valid number')
           .positive('Radius must be greater than 0')
@@ -75,7 +75,7 @@ const schema = toTypedSchema(
     }),
 )
 
-const {handleSubmit, resetForm} = useForm({
+const {handleSubmit, resetForm, setFieldValue, values} = useForm({
   validationSchema: schema,
   keepValuesOnUnmount: true,
   initialValues: {
@@ -85,6 +85,29 @@ const {handleSubmit, resetForm} = useForm({
     expiration: '',
     inactivity_timeout: '30',
   },
+})
+
+const selectedLocationLabel = ref<string | null>(null)
+
+const lastAutoName = ref('')
+
+function computeDefaultName(): string {
+  if (selectedLocationLabel.value) return selectedLocationLabel.value
+  if (selectedCoordinates.value) {
+    const {latitude, longitude} = selectedCoordinates.value
+    return `Radar - ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  }
+  return ''
+}
+
+watch([selectedCoordinates, selectedLocationLabel], () => {
+  const nextDefault = computeDefaultName()
+  if (!nextDefault) return
+
+  if (values.name === '' || values.name === lastAutoName.value) {
+    setFieldValue('name', nextDefault)
+  }
+  lastAutoName.value = nextDefault
 })
 
 // ── Step navigation ────────────────────────────────────────────────────────────
@@ -112,7 +135,7 @@ const onSubmit = handleSubmit(async (formValues) => {
 
   try {
     const payload = {
-      name: formValues.name || null,
+      name: formValues.name,
       coordinates: selectedCoordinates.value!,
       radius: formValues.radius,
       refresh_interval: formValues.refresh_interval,
@@ -145,6 +168,8 @@ watch(open, (isOpen) => {
     resetForm()
     errorMessage.value = null
     selectedCoordinates.value = null
+    selectedLocationLabel.value = null
+    lastAutoName.value = ''
     goToStep(1)
   }
 })
@@ -184,7 +209,7 @@ watch(open, (isOpen) => {
             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Location <span class="text-destructive">*</span>
             </label>
-            <RadarLocationPicker v-model="selectedCoordinates" class="mt-2" />
+            <RadarLocationPicker v-model="selectedCoordinates" v-model:label="selectedLocationLabel" class="mt-2" />
           </div>
 
           <!-- Radius -->
@@ -230,13 +255,13 @@ watch(open, (isOpen) => {
                      v-slot="{ componentField }"
           >
             <FormItem>
-              <FormLabel>Name (optional)</FormLabel>
+              <FormLabel>Name <span class="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input v-bind="componentField"
                        placeholder="e.g., Downtown Zone"
                 />
               </FormControl>
-              <FormDescription>A friendly name for this radar zone.</FormDescription>
+              <FormDescription>A friendly name for this radar zone. Defaults to the selected place or coordinates.</FormDescription>
               <FormMessage/>
             </FormItem>
           </FormField>

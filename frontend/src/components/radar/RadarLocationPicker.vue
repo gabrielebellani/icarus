@@ -20,6 +20,11 @@ const props = withDefaults(defineProps<Props>(), {
 // v-model for selected coordinates
 const selectedCoordinates = defineModel<RadarCoordinates | null>()
 
+// v-model:label for the human-readable place name, set when a search result
+// is selected. Cleared when the location is set manually (map click/drag),
+// since a raw pin drop has no associated place name.
+const selectedLabel = defineModel<string | null>('label', {default: null})
+
 // DOM ref for the map container
 const mapContainer = ref<HTMLDivElement>()
 let map: L.Map | null = null
@@ -70,6 +75,9 @@ function setMarker(latlng: L.LatLng) {
 
     marker = L.marker(latlng, { icon, draggable: true })
     marker.on('dragend', (e: any) => {
+      // Dragging the pin is a manual placement, so it no longer matches
+      // whatever search result label (if any) was previously selected.
+      selectedLabel.value = null
       setMarker(e.target.getLatLng())
     })
     marker.addTo(map)
@@ -91,6 +99,7 @@ async function selectResult(result: GeocodeResult) {
   const latlng = L.latLng(result.latitude, result.longitude)
   map.setView(latlng, 13)
   setMarker(latlng)
+  selectedLabel.value = result.label
 
   // Clear search UI.
   searchQuery.value = ''
@@ -121,6 +130,8 @@ async function handleSearchInput(query: string) {
  */
 function handleMapClick(e: L.LeafletMouseEvent) {
   showResults.value = false
+  // Clicking the map is a manual placement, so drop any search result label.
+  selectedLabel.value = null
   setMarker(e.latlng)
 }
 
