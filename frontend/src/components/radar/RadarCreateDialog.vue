@@ -142,7 +142,7 @@ const onSubmit = handleSubmit(async (formValues) => {
       expiration: formValues.expiration || null,
       inactivity_timeout:
         formValues.inactivity_timeout && formValues.inactivity_timeout !== 'none'
-          ? Number(formValues.inactivity_timeout)
+          ? formValues.inactivity_timeout
           : null,
     }
 
