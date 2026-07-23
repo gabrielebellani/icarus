@@ -2,7 +2,7 @@ import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {db} from "../index.ts";
 import {Preference} from "../classes/Preference.ts";
 import {jsonResponse} from "../utils/response.util.ts";
-import {type PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
+import {PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
 import {AppPreference} from "../classes/AppPreference.ts";
 import {getFlightawareKey} from "../utils/third_party.util.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
@@ -13,8 +13,7 @@ export async function getUserPreferences(request: Request) {
 
     const userId = auth.user_id;
 
-    const rawPreferences = db.query("SELECT * FROM preferences WHERE user_id = ?")
-        .all(userId)
+    const rawPreferences = getPreferences(userId)
 
     return jsonResponse(Preference.fromDBBulk(rawPreferences))
 }
@@ -30,8 +29,16 @@ export async function setUserPreferences(request: Request) {
         return jsonResponse({error: 'Expected an array of preferences'}, 422);
     }
 
+    const flightawareEntry = body.find((prefData: any) => prefData.key === PreferenceKeyEnum.FLIGHTAWARE_API_KEY);
+    if (flightawareEntry) {
+        body.push({
+            key: PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD,
+            value: flightawareEntry.value ? 4000 : 400,
+        });
+    }
+
     try {
-        db.transaction(async () => {
+        db.transaction(() => {
             for (const prefData of body) {
                 const pref = new Preference(userId, prefData.key, prefData.value);
 
@@ -45,8 +52,8 @@ export async function setUserPreferences(request: Request) {
                     ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
                 `).run(userId, pref.key, pref.value);
             }
-        });
-        return jsonResponse({message: 'Preferences updated successfully'});
+        })();
+        return jsonResponse({message: 'Preferences updated successfully', preferences: getPreferences(userId)});
     } catch (error) {
         return jsonResponse({error: error instanceof Error ? error.message : 'An error occurred'}, 500);
     }
@@ -93,4 +100,9 @@ export function getAppPreference(key: PreferenceKeyEnum): AppPreference | null {
         return null
     }
     return AppPreference.fromDB(preference)
+}
+
+export function getPreferences(userId: number){
+    return db.query("SELECT * FROM preferences WHERE user_id = ?")
+        .all(userId)
 }

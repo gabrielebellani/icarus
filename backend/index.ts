@@ -33,13 +33,13 @@ import {jsonResponse} from "./utils/response.util.ts";
 import {deleteExpiredRadars} from "./utils/cron.util.ts";
 import {env} from "./utils/env.ts";
 
-export const db = new Database('./icarus-db.sqlite', {create: true});
+export const db = new Database(env.DB_PATH, {create: true});
 export const redis = new RedisClient()
 
 // Execute migrations
 await runMigrations();
 
-// Initialized superuser from env
+// Initialize superuser from env
 await bootstrapSuperuser();
 
 Bun.cron("0 1 * * *", () => {
@@ -124,10 +124,10 @@ Bun.serve({
             }
 
             if (!token) {
-                return jsonResponse({ error: 'Missing token' }, 401);
+                return jsonResponse({error: 'Missing token'}, 401);
             }
 
-            if (server.upgrade(request, { data: { id: String(request.params.id), token } })) {
+            if (server.upgrade(request, {data: {id: String(request.params.id), token}})) {
                 return;
             }
 
