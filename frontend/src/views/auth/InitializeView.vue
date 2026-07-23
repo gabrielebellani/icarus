@@ -31,16 +31,8 @@ const router = useRouter()
 const errorMessage = ref<string | null>(null)
 const isSubmitting = ref(false)
 
-const DISPLAY_MODES = [
-  { value: 'minimal', label: 'Minimal' },
-  { value: 'detailed', label: 'Detailed' },
-  { value: 'flight', label: 'Flight' },
-  { value: 'airport', label: 'Airport' },
-] as const
-
 const schema = toTypedSchema(
   z.object({
-    display_mode: z.enum(['minimal', 'detailed', 'flight', 'airport']),
     flightawareApiKey: z.string().optional(),
     openSkyNetworkKey: z.string().optional(),
   }),
@@ -48,9 +40,6 @@ const schema = toTypedSchema(
 
 const { handleSubmit } = useForm({
   validationSchema: schema,
-  initialValues: {
-    display_mode: 'minimal',
-  },
 })
 
 const onSubmit = handleSubmit(async (values) => {
@@ -60,7 +49,6 @@ const onSubmit = handleSubmit(async (values) => {
   const payload = {
     openSkyNetworkKey: values.openSkyNetworkKey ?? '',
     flightawareApiKey: values.flightawareApiKey ?? '',
-    display_mode: values.display_mode,
   }
 
   try {
@@ -84,9 +72,6 @@ const onSubmit = handleSubmit(async (values) => {
     <div class="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
       <div class="mb-6">
         <h1 class="text-xl font-semibold leading-none tracking-tight">Set up your account</h1>
-        <p class="text-sm text-muted-foreground mt-1">
-          Customize your experience. All fields except display mode are optional.
-        </p>
       </div>
 
       <Alert v-if="errorMessage" variant="destructive" class="mb-4">
@@ -94,27 +79,6 @@ const onSubmit = handleSubmit(async (values) => {
       </Alert>
 
       <form @submit.prevent="onSubmit" class="space-y-4">
-        <!-- Display mode -->
-        <FormField name="display_mode" v-slot="{ componentField }">
-          <FormItem>
-            <FormLabel>Display mode <span class="text-destructive">*</span></FormLabel>
-            <Select v-bind="componentField">
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a display mode" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem v-for="mode in DISPLAY_MODES" :key="mode.value" :value="mode.value">
-                  {{ mode.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <FormDescription>Choose your dashboard default view mode</FormDescription>
-            <FormMessage :align="'left'"/>
-          </FormItem>
-        </FormField>
-
         <!-- Flightaware API key -->
         <FormField name="flightawareApiKey" v-slot="{ componentField }">
           <FormItem>

@@ -335,9 +335,7 @@ export async function fetchUserPreferences(): Promise<UserPreferences> {
 }
 
 interface UserPreferences {
-  display_mode: 'minimal' | 'detailed' | 'compact'
   theme: 'dark' | 'light'
-  notifications_enabled: boolean
   // ...
 }
 ```

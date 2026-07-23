@@ -55,7 +55,6 @@ export function fetchInitStatus(): Promise<InitStatus> {
 export function initializeUser(payload: {
   openSkyNetworkKey: string
   flightawareApiKey?: string
-  display_mode: string
 }): Promise<{ message: string }> {
   return request<{ message: string }>('/auth/init', {
     method: 'POST',

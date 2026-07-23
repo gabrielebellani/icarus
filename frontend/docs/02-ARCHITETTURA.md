@@ -94,7 +94,7 @@ export function useTimetable({ trackingId, onAuthFailure }) {
    - `bindClient(onAuthFailure)` - Wire il client HTTP
 
 2. **preferencesStore** (`src/stores/preferences.ts`)
-   - Preferenze utente (display mode, etc.)
+   - Preferenze utente
    - Syncronizzate con backend
 
 ### 4. Data Access Layer (API Client)

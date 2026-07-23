@@ -138,7 +138,7 @@ export default {
 
 **Location**: `src/stores/preferences.ts`
 
-Gestisce le preferenze utente (display mode, temi, etc.).
+Gestisce le preferenze utente
 
 ### State
 

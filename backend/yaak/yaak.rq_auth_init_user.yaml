@@ -17,7 +17,6 @@ body:
         "longitude": 9.00
       },
       "radius": 25,
-      "display_mode": "detailed"
     }
 bodyType: application/json
 description: 'First login: stores user preferences (coordinates, radius, ecc.). Requires Authorization: Bearer <access_token>. Can be used only once per user.'
