@@ -142,83 +142,24 @@ export async function getAirportTimetable(request: Request, id: number){
         return jsonResponse({error: "Flightaware API key is missing."}, 400)
     }
 
-    const responseData: {
-        arrivals?: any[]
-        departures?: any[]
-    } = {}
-
     const airportCode = !!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!
     const { direction, start, end } = parsed.data
     const flightAwareService = new FlightawareService(flightAwareKey, userId)
 
-    if(direction === 'in'){
-        const arrivals: any = await flightAwareService.fetchAirportTimetable(
-            airportCode,
-            new Date(start),
-            new Date(end),
-            'arrivals'
-        )
+    const {key, scheduledKey, sortField} = direction === 'in'
+        ? {key: 'arrivals', scheduledKey: 'scheduled_arrivals', sortField: 'scheduled_in'}
+        : {key: 'departures', scheduledKey: 'scheduled_departures', sortField: 'scheduled_out'}
 
-        const scheduled: any = await flightAwareService.fetchAirportTimetable(
-            airportCode,
-            new Date(start),
-            new Date(end),
-            'scheduled_arrivals'
-        )
+    const [timetable, scheduled]: any[] = await Promise.all([
+        flightAwareService.fetchAirportTimetable(airportCode, new Date(start), new Date(end), key),
+        flightAwareService.fetchAirportTimetable(airportCode, new Date(start), new Date(end), scheduledKey),
+    ])
 
-        responseData.arrivals = [
-            ...arrivals.arrivals,
-            ...scheduled.scheduled_arrivals
-        ].sort((a: any, b: any) => new Date(a.scheduled_in).getTime() - new Date(b.scheduled_in).getTime())
-    }else if (direction === 'out'){
-        const departures: any = await flightAwareService.fetchAirportTimetable(
-            airportCode,
-            new Date(start),
-            new Date(end),
-            'departures'
-        )
+    const flights = [...timetable[key], ...scheduled[scheduledKey]]
+        .sort((a: any, b: any) => new Date(a[sortField]).getTime() - new Date(b[sortField]).getTime())
 
-        const scheduled: any = await flightAwareService.fetchAirportTimetable(
-            airportCode,
-            new Date(start),
-            new Date(end),
-            'scheduled_departures'
-        )
-
-        responseData.departures = [
-            ...departures.departures,
-            ...scheduled.scheduled_departures
-        ].sort((a: any, b: any) => new Date(a.scheduled_out).getTime() - new Date(b.scheduled_out).getTime())
-    }
-
-    return jsonResponse(responseData)
+    return jsonResponse({[key]: flights})
 }
-
-// export async function getAirportDelays(request: Request, id: number){
-//     const auth = await authenticate(request)
-//     if (isAuthError(auth)) return auth;
-//
-//     const userId = auth.user_id
-//     const trackedAirport = getTrackedAirportById(userId, id)
-//
-//     if(trackedAirport === null){
-//         return jsonResponse({error: "Tracking not found"}, 404)
-//     }
-//
-//     if(trackedAirport.icao_code === null && trackedAirport.iata_code === null){
-//         return jsonResponse({error: "Tracked airport has no valid ICAO or IATA code."}, 400)
-//     }
-//
-//     const flightAwareKey = getFlightawareKey(userId)
-//     if (flightAwareKey === null) {
-//         return jsonResponse({error: "Flightaware API key is missing."}, 400)
-//     }
-//
-//     const flightAwareService = new FlightawareService(flightAwareKey)
-//     const delays = await flightAwareService.fetchAirportDelays(!!trackedAirport.icao_code ? trackedAirport.icao_code : trackedAirport.iata_code!)
-//
-//     return jsonResponse(delays)
-// }
 
 function getTrackedAirports(userId: number): (TrackedAirport | null)[] {
     return db.prepare("SELECT * FROM tracked_airports WHERE user_id = ?")
@@ -237,18 +178,9 @@ function stopTracking(userId: number, id: number){
     db.prepare("DELETE FROM tracked_airports WHERE user_id = ? AND id = ?").run(userId, id)
 }
 
-function isAirportAlreadyTracked(userId: number, icaoCode: string | null, iataCode: string | null, id: number|null = null): {
+function isAirportAlreadyTracked(userId: number, icaoCode: string | null, iataCode: string | null): {
     already_tracked: number
 } {
-    const query = "SELECT COUNT(*) as already_tracked FROM tracked_airports WHERE user_id = ? AND (icao_code = ? OR iata_code = ?)"
-        .concat(id !== null ? " AND id <> ?" : "")
-        .concat(" LIMIT 1")
-
-    const args: any[] = [userId, icaoCode, iataCode]
-    if (id !== null) {
-        args.push(id)
-    }
-
-    return db.prepare(query)
-        .get(...args) as {already_tracked: number}
+    return db.prepare("SELECT COUNT(*) as already_tracked FROM tracked_airports WHERE user_id = ? AND (icao_code = ? OR iata_code = ?) LIMIT 1")
+        .get(userId, icaoCode, iataCode) as {already_tracked: number}
 }

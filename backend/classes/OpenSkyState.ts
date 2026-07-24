@@ -84,7 +84,7 @@ export class OpenSkyState {
         return this._distanceFromRadarCenter;
     }
 
-    set distanceFromRadarCenter(radarCenterCoordinates: Coordinates) {
+    public computeDistanceFromRadarCenter(radarCenterCoordinates: Coordinates): void {
         this._distanceFromRadarCenter = getDistanceFromCoordinates({ latitude: this.latitude!, longitude: this.longitude! }, radarCenterCoordinates);
     }
 }

@@ -32,11 +32,6 @@ export class FlightawareService extends ThirdPartyHttpService {
         return await this.fetchFromFlightAware(url);
     }
 
-    // public async fetchAirportDelays(code: string) {
-    //     const url = new URL(this.host.concat('airports', '/', code, '/', 'delays'))
-    //     return await this.fetchFromFlightAware(url)
-    // }
-
     public async fetchUsage() {
         const endpoint = this.host.concat('account', '/', 'usage')
         const url = new URL(endpoint)

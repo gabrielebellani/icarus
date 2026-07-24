@@ -30,14 +30,6 @@ export class OpenSkyService extends ThirdPartyHttpService{
             return [];
         }
 
-        // const apiResponse = {
-        //     "time": new Date().toISOString(),
-        //     "states": [
-        //         ["3c65d7","DLH49M","Germany",1780385252,1780385252,8.9519,45.0579,11879.58,false,203.42,226.54,0,null,12222.48,"1000",false,0],
-        //         ["71be17","KAL591","Republic of Korea",1780385252,1780385252,9.0044,44.9202,10668,false,219.69,232.33,0,null,11010.9,"1000",false,0]
-        //     ]
-        // }
-
         return apiResponse.content.states.map((state:any)=> OpenSkyState.fromOpenSkyApi(state)) as OpenSkyState[];
     }
 

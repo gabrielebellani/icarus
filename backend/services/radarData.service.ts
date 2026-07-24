@@ -23,10 +23,6 @@ export class RadarDataService {
         userId: number,
         openSkyKey: string | null
     ): Promise<RadarSingleAircraft[]> {
-        // if (!openSkyKey) {
-        //     return [];
-        // }
-
         const bbox = getBoundingBox(radar.coordinates.latitude, radar.coordinates.longitude, radar.radius);
         const openSkyService = new OpenSkyService(openSkyKey, userId);
         const aircraftInArea = await openSkyService.fetchAircraftInArea(bbox);
@@ -236,7 +232,7 @@ export class RadarDataService {
 
         return prioritizedFlights
             .map(state => {
-                state.distanceFromRadarCenter = radar.coordinates
+                state.computeDistanceFromRadarCenter(radar.coordinates)
                 return state
             })
             .filter(state =>
