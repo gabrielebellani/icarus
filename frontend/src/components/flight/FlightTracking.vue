@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Flight } from '@/types/flight'
+import type { TrackedFlightPayload, FlightDataSource } from '@/types/flight'
 import { Button } from '@/components/ui/button'
 import FlightCardDetailed from './FlightCardDetailed.vue'
 import FlightCardMinimal from './FlightCardMinimal.vue'
 
 const props = defineProps<{
-  flight: Flight
+  flight: TrackedFlightPayload
+  dataSource?: FlightDataSource
+  degradedMode?: boolean
 }>()
 
 const emit = defineEmits<{
   stopTracking: []
 }>()
+
+// ── Live status indicator ──────────────────────────────────────────────────────
+const liveStatusLabel = computed(() => (props.degradedMode ? 'Reduced updates' : 'Live'))
+const liveStatusTone = computed(() => (props.degradedMode ? 'amber' : 'green'))
 
 // ── View mode ────────────────────────────────────────────────────────────────
 type View = 'minimal' | 'detailed'
@@ -21,8 +27,8 @@ const view = ref<View>('minimal')
 const showIcao = ref(false)
 const displayIdent = computed(() =>
   showIcao.value
-    ? props.flight.ident_icao || props.flight.ident_iata
-    : props.flight.ident_iata || props.flight.ident_icao,
+    ? props.flight.route.ident_icao || props.flight.route.ident_iata
+    : props.flight.route.ident_iata || props.flight.route.ident_icao,
 )
 
 // ── Fullscreen ────────────────────────────────────────────────────────────────
@@ -75,6 +81,17 @@ function doStop() {
     >
       <!-- Toolbar -->
       <div class="flight-tracking__toolbar">
+        <div class="flight-tracking__toolbar-left">
+          <div class="flight-tracking__live-status">
+            <span
+              class="flight-tracking__status-dot"
+              :class="`flight-tracking__status-dot--${liveStatusTone}`"
+              aria-hidden="true"
+            />
+            <span class="flight-tracking__status-label">{{ liveStatusLabel }}</span>
+          </div>
+        </div>
+
         <div class="flight-tracking__view-toggle" role="group" aria-label="View mode">
           <button
             class="flight-tracking__view-btn"
@@ -130,6 +147,7 @@ function doStop() {
         v-else
         :flight="flight"
         :show-icao="showIcao"
+        :class="{ 'flight-tracking__detailed--fullscreen': isFullscreen }"
         @toggle-ident="showIcao = !showIcao"
       />
 
@@ -190,6 +208,15 @@ function doStop() {
       flex-direction: column;
       justify-content: space-between;
     }
+
+    .flight-tracking__detailed--fullscreen {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      max-width: none;
+      min-height: 0;
+      //overflow-y: auto;
+    }
   }
 }
 
@@ -199,6 +226,45 @@ function doStop() {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.625rem;
+}
+
+.flight-tracking__toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.flight-tracking__live-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.flight-tracking__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: flight-tracking-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  &--green {
+    background: oklch(0.78 0.16 145);
+  }
+
+  &--amber {
+    background: oklch(0.78 0.16 70);
+  }
+}
+
+@keyframes flight-tracking-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .flight-tracking__view-toggle {

@@ -91,7 +91,7 @@ services:
   icarus-frontend:
     image: ghcr.io/gabrielebellani/icarus-frontend:latest
     ports:
-      - "80:80"
+      - "8920:8920"
     depends_on:
       icarus-backend:
         condition: service_healthy
@@ -210,7 +210,7 @@ icarus/
 - **Always** change `SUPERUSER_PASSWORD` and `JWT_SECRET` in production
 - Use strong, random passwords (at least 16 characters)
 - Set `FRONTEND_URL` to your actual domain for password recovery links
-- Consider using a reverse proxy (Traefik) in front of Caddy for HTTPS/TLS
+- Consider using a reverse proxy for HTTPS/TLS
 - Keep Docker images updated regularly
 - Monitor logs for suspicious activity
 

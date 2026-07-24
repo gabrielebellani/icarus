@@ -23,6 +23,13 @@ CREATE TABLE IF NOT EXISTS tracked_flights (
     icao_code VARCHAR(16) NULL,
     reference_date TEXT NOT NULL,
     payload NULL,
+    icao24 VARCHAR(16) NULL,
+    phase VARCHAR(16) NOT NULL DEFAULT 'ground',
+    last_adsb_at INTEGER NULL,
+    last_flightaware_at INTEGER NULL,
+    adsb_state TEXT NULL,
+    data_source VARCHAR(16) NULL,
+    degraded_mode INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id)
     UNIQUE (user_id)
 );

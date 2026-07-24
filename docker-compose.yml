@@ -55,7 +55,7 @@ services:
       - redis-data:/data
     restart: unless-stopped
 
-  # External service: flight tracking data aggregation
+  # External service: aircraft image and information scraper
   jetapi-scraper:
     image: ghcr.io/gabrielebellani/jetapi_scarper_docker:1.0.0
     container_name: icarus-jetapi

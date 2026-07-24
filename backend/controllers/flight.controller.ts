@@ -2,13 +2,15 @@ import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {getFlightawareKey} from "../utils/third_party.util.ts";
 import {jsonResponse} from "../utils/response.util.ts";
 import {FlightawareService} from "../services/flightaware.service.ts";
+import {FlightTrackingRefreshService} from "../services/flightTrackingRefresh.service.ts";
 import {z} from "zod";
 import {addDays, endOfDay, startOfDay, subDays} from "date-fns";
 import {db} from "../index.ts";
 import {TrackedFlight} from "../classes/TrackedFlight.ts";
+import {normalizeFlightPayload} from "../utils/flight.util.ts";
 
 const trackFlightSchema = z.object({
-    identifier: z.string().min(4).max(6),
+    identifier: z.string().min(4).max(10),
     date: z.iso.date()
         .refine(
             (date) => {
@@ -46,7 +48,13 @@ export async function searchFlight(request: Request) {
     }
 
     const flightAwareService = new FlightawareService(flightAwareKey, userId)
-    return jsonResponse(await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date)))
+    const result = await flightAwareService.fetchFlightInfo(parsed.data.identifier, new Date(parsed.data.date))
+
+    if (result?.flights && Array.isArray(result.flights)) {
+        result.flights = result.flights.map((flight: any) => normalizeFlightPayload(flight))
+    }
+
+    return jsonResponse(result)
 }
 
 export async function getTrackingFlight(request: Request){
@@ -54,14 +62,13 @@ export async function getTrackingFlight(request: Request){
     if (isAuthError(auth)) return auth;
 
     const userId = auth.user_id
-    const trackedFlight = getTrackedFlight(userId)
+    const trackedFlightRow = await FlightTrackingRefreshService.refreshTrackedFlight(userId)
 
-    if(trackedFlight === null){
+    if(trackedFlightRow === null){
         return jsonResponse(null)
-    }else{
-        return jsonResponse(trackedFlight)
+    } else {
+        return jsonResponse(TrackedFlight.fromDB(trackedFlightRow))
     }
-
 }
 
 export async function startTracking(request: Request){
@@ -91,16 +98,21 @@ export async function startTracking(request: Request){
     //removes currently tracked flight for user (only one can be tracked)
     stopTracking(userId)
 
+    const flightPayload = normalizeFlightPayload(flightInfo.flights[0]);
     db.prepare("INSERT INTO tracked_flights (user_id, iata_code, icao_code, reference_date, payload) values (?, ?, ?, ?, ?)")
         .run(
             userId,
-            flightInfo.flights[0].ident_iata ?? null,
-            flightInfo.flights[0].ident_icao ?? flightInfo.flights[0].ident,
+            flightPayload.ident_iata ?? null,
+            flightPayload.ident_icao ?? flightPayload.ident,
             parsed.data.date,
-            JSON.stringify(flightInfo.flights[0])
+            JSON.stringify(flightPayload)
         );
 
-    return jsonResponse(getTrackedFlight(userId))
+    // Initialize tracking state: derive phase, resolve aircraft identity, set timestamps
+    await FlightTrackingRefreshService.initializeTrackingState(userId, flightPayload);
+
+    const trackedFlightRow = await FlightTrackingRefreshService.refreshTrackedFlight(userId);
+    return jsonResponse(trackedFlightRow ? TrackedFlight.fromDB(trackedFlightRow) : null)
 }
 
 export async function terminateTracking(request: Request){

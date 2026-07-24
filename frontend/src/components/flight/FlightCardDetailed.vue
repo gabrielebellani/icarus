@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Flight } from '@/types/flight'
+import { computed, ref, watch } from 'vue'
+import type { TrackedFlightPayload } from '@/types/flight'
 
 const props = defineProps<{
-  flight: Flight
+  flight: TrackedFlightPayload
   showIcao: boolean
 }>()
 
@@ -13,20 +13,20 @@ const emit = defineEmits<{
 
 const displayIdent = computed(() =>
   props.showIcao
-    ? props.flight.ident_icao || props.flight.ident_iata
-    : props.flight.ident_iata || props.flight.ident_icao,
+    ? props.flight.route.ident_icao || props.flight.route.ident_iata
+    : props.flight.route.ident_iata || props.flight.route.ident_icao,
 )
 
 const statusClass = computed(() => {
-  if (props.flight.cancelled) return 'cancelled'
-  if (props.flight.diverted) return 'diverted'
-  if (props.flight.progress_percent === 100) return 'arrived'
-  if (props.flight.progress_percent > 0) return 'airborne'
+  if (props.flight.route.cancelled) return 'cancelled'
+  if (props.flight.route.diverted) return 'diverted'
+  if (props.flight.route.progress_percent === 100) return 'arrived'
+  if (props.flight.route.progress_percent > 0) return 'airborne'
   return 'scheduled'
 })
 
-const departureDelay = computed(() => props.flight.departure_delay)
-const arrivalDelay = computed(() => props.flight.arrival_delay)
+const departureDelay = computed(() => props.flight.schedule.departure_delay)
+const arrivalDelay = computed(() => props.flight.schedule.arrival_delay)
 const hasDepartureDelay = computed(() => departureDelay.value !== 0)
 const hasArrivalDelay = computed(() => arrivalDelay.value !== 0)
 
@@ -47,6 +47,29 @@ function formatDelay(seconds: number): string {
   const m = Math.round(abs / 60)
   return seconds < 0 ? `${m}m early` : `+${m}m`
 }
+
+// ── Image fallback handling ────────────────────────────────────────────────────
+// Hide broken images entirely (no alt text, no placeholder) instead of showing
+// a broken-image icon when a logo/photo URL 404s. Mirrors RadarAircraftCard.vue.
+const logoError = ref(false)
+const photoError = ref(false)
+
+watch(
+  () => props.flight.airline.logo,
+  () => {
+    logoError.value = false
+  },
+)
+
+watch(
+  () => props.flight.aircraft.image_url,
+  () => {
+    photoError.value = false
+  },
+)
+
+const showAirlineLogo = computed(() => Boolean(props.flight.airline.logo) && !logoError.value)
+const showAircraftImage = computed(() => Boolean(props.flight.aircraft.image_url) && !photoError.value)
 </script>
 
 <template>
@@ -64,33 +87,43 @@ function formatDelay(seconds: number): string {
           <span class="flight-detailed__ident-format">{{ showIcao ? 'ICAO' : 'IATA' }}</span>
         </button>
         <span class="flight-detailed__status" :class="`flight-detailed__status--${statusClass}`">
-          {{ flight.status }}
+          {{ flight.route.status }}
         </span>
+      </div>
+      <div v-if="flight.airline.name || showAirlineLogo" class="flight-detailed__airline">
+        <img
+          v-if="showAirlineLogo"
+          :src="flight.airline.logo!"
+          :alt="flight.airline.name || flight.airline.operator"
+          class="flight-detailed__airline-logo"
+          @error="logoError = true"
+        />
+        <span v-if="flight.airline.name" class="flight-detailed__airline-name">{{ flight.airline.name }}</span>
       </div>
     </div>
 
     <!-- Route strip -->
     <div class="flight-detailed__route">
       <div class="flight-detailed__airport">
-        <span class="flight-detailed__airport-code">{{ flight.origin.code_iata }}</span>
-        <span class="flight-detailed__airport-name">{{ flight.origin.name }}</span>
-        <span class="flight-detailed__airport-city">{{ flight.origin.city }}</span>
+        <span class="flight-detailed__airport-code">{{ flight.route.origin.code_iata }}</span>
+        <span class="flight-detailed__airport-name">{{ flight.route.origin.name }}</span>
+        <span class="flight-detailed__airport-city">{{ flight.route.origin.city }}</span>
       </div>
 
       <div class="flight-detailed__progress-col">
         <div
           class="flight-detailed__progress-bar"
           role="progressbar"
-          :aria-valuenow="flight.progress_percent"
+          :aria-valuenow="flight.route.progress_percent"
           aria-valuemin="0"
           aria-valuemax="100"
         >
           <div
             class="flight-detailed__progress-fill"
-            :style="{ width: `${flight.progress_percent}%` }"
+            :style="{ width: `${flight.route.progress_percent}%` }"
           >
             <span
-              v-if="flight.progress_percent > 0 && flight.progress_percent < 100"
+              v-if="flight.route.progress_percent > 0 && flight.route.progress_percent < 100"
               class="flight-detailed__plane-icon"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -100,16 +133,26 @@ function formatDelay(seconds: number): string {
           </div>
         </div>
         <div class="flight-detailed__progress-meta">
-          <span>{{ formatDuration(flight.filed_ete) }}</span>
-          <span>{{ flight.route_distance }} nm</span>
+          <span>{{ formatDuration(flight.route.filed_ete) }}</span>
+          <span>{{ flight.route.route_distance }} nm</span>
         </div>
       </div>
 
       <div class="flight-detailed__airport flight-detailed__airport--right">
-        <span class="flight-detailed__airport-code">{{ flight.destination.code_iata }}</span>
-        <span class="flight-detailed__airport-name">{{ flight.destination.name }}</span>
-        <span class="flight-detailed__airport-city">{{ flight.destination.city }}</span>
+        <span class="flight-detailed__airport-code">{{ flight.route.destination.code_iata }}</span>
+        <span class="flight-detailed__airport-name">{{ flight.route.destination.name }}</span>
+        <span class="flight-detailed__airport-city">{{ flight.route.destination.city }}</span>
       </div>
+    </div>
+
+    <!-- Aircraft image -->
+    <div v-if="showAircraftImage" class="flight-detailed__aircraft-image-wrapper">
+      <img
+        :src="flight.aircraft.image_url!"
+        :alt="`${flight.aircraft.type} (${flight.aircraft.registration})`"
+        class="flight-detailed__aircraft-image"
+        @error="photoError = true"
+      />
     </div>
 
     <!-- Timing grid -->
@@ -128,24 +171,24 @@ function formatDelay(seconds: number): string {
         <div class="flight-detailed__timing-rows">
           <div class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Scheduled gate out</span>
-            <span class="flight-detailed__timing-val">{{ formatTime(flight.scheduled_out) }}</span>
+            <span class="flight-detailed__timing-val">{{ formatTime(flight.schedule.scheduled_out) }}</span>
           </div>
           <div class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Est. wheels off</span>
             <span class="flight-detailed__timing-val">
-              {{ formatTime(flight.actual_off || flight.estimated_off) }}
-              <em v-if="flight.actual_off" class="flight-detailed__actual-badge">actual</em>
+              {{ formatTime(flight.schedule.actual_off || flight.schedule.estimated_off) }}
+              <em v-if="flight.schedule.actual_off" class="flight-detailed__actual-badge">actual</em>
             </span>
           </div>
-          <div v-if="flight.gate_origin || flight.terminal_origin" class="flight-detailed__timing-row">
+          <div v-if="flight.schedule.gate_origin || flight.schedule.terminal_origin" class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Gate / Terminal</span>
             <span class="flight-detailed__timing-val">
-              {{ [flight.gate_origin ? `Gate ${flight.gate_origin}` : null, flight.terminal_origin ? `T${flight.terminal_origin}` : null].filter(Boolean).join(' · ') || '—' }}
+              {{ [flight.schedule.gate_origin ? `Gate ${flight.schedule.gate_origin}` : null, flight.schedule.terminal_origin ? `T${flight.schedule.terminal_origin}` : null].filter(Boolean).join(' · ') || '—' }}
             </span>
           </div>
-          <div v-if="flight.actual_runway_off" class="flight-detailed__timing-row">
+          <div v-if="flight.schedule.actual_runway_off" class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Runway used</span>
-            <span class="flight-detailed__timing-val">{{ flight.actual_runway_off }}</span>
+            <span class="flight-detailed__timing-val">{{ flight.schedule.actual_runway_off }}</span>
           </div>
         </div>
       </div>
@@ -166,30 +209,47 @@ function formatDelay(seconds: number): string {
         <div class="flight-detailed__timing-rows">
           <div class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Scheduled gate in</span>
-            <span class="flight-detailed__timing-val">{{ formatTime(flight.scheduled_in) }}</span>
+            <span class="flight-detailed__timing-val">{{ formatTime(flight.schedule.scheduled_in) }}</span>
           </div>
           <div class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Est. wheels on</span>
             <span class="flight-detailed__timing-val">
-              {{ formatTime(flight.actual_on || flight.estimated_on) }}
-              <em v-if="flight.actual_on" class="flight-detailed__actual-badge">actual</em>
+              {{ formatTime(flight.schedule.actual_on || flight.schedule.estimated_on) }}
+              <em v-if="flight.schedule.actual_on" class="flight-detailed__actual-badge">actual</em>
             </span>
           </div>
-          <div v-if="flight.gate_destination || flight.terminal_destination" class="flight-detailed__timing-row">
+          <div v-if="flight.schedule.gate_destination || flight.schedule.terminal_destination" class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Gate / Terminal</span>
             <span class="flight-detailed__timing-val">
-              {{ [flight.gate_destination ? `Gate ${flight.gate_destination}` : null, flight.terminal_destination ? `T${flight.terminal_destination}` : null].filter(Boolean).join(' · ') || '—' }}
+              {{ [flight.schedule.gate_destination ? `Gate ${flight.schedule.gate_destination}` : null, flight.schedule.terminal_destination ? `T${flight.schedule.terminal_destination}` : null].filter(Boolean).join(' · ') || '—' }}
             </span>
           </div>
-          <div v-if="flight.actual_runway_on" class="flight-detailed__timing-row">
+          <div v-if="flight.schedule.actual_runway_on" class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Runway used</span>
-            <span class="flight-detailed__timing-val">{{ flight.actual_runway_on }}</span>
+            <span class="flight-detailed__timing-val">{{ flight.schedule.actual_runway_on }}</span>
           </div>
-          <div v-if="flight.baggage_claim" class="flight-detailed__timing-row">
+          <div v-if="flight.schedule.baggage_claim" class="flight-detailed__timing-row">
             <span class="flight-detailed__timing-sub">Baggage claim</span>
-            <span class="flight-detailed__timing-val">{{ flight.baggage_claim }}</span>
+            <span class="flight-detailed__timing-val">{{ flight.schedule.baggage_claim }}</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ADS-B state (live position data, when available) -->
+    <!-- ADS-B state (live position data) -->
+    <div class="flight-detailed__adsb">
+      <div class="flight-detailed__detail-item">
+        <span class="flight-detailed__detail-label">On ground</span>
+        <span class="flight-detailed__detail-value">{{ flight.adsb_state?.on_ground == null ? '—' : (flight.adsb_state.on_ground ? 'Yes' : 'No') }}</span>
+      </div>
+      <div class="flight-detailed__detail-item">
+        <span class="flight-detailed__detail-label">Ground speed</span>
+        <span class="flight-detailed__detail-value">{{ flight.adsb_state?.velocity != null ? `${Math.round(flight.adsb_state.velocity * 1.94384)} kt` : '—' }}</span>
+      </div>
+      <div class="flight-detailed__detail-item">
+        <span class="flight-detailed__detail-label">Altitude</span>
+        <span class="flight-detailed__detail-value">{{ flight.adsb_state?.altitude != null ? `${Math.round(flight.adsb_state.altitude * 3.28084)} ft` : '—' }}</span>
       </div>
     </div>
 
@@ -197,32 +257,28 @@ function formatDelay(seconds: number): string {
     <div class="flight-detailed__details">
       <div class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Aircraft</span>
-        <span class="flight-detailed__detail-value">{{ flight.aircraft_type }}</span>
+        <span class="flight-detailed__detail-value">{{ flight.aircraft.type }}</span>
       </div>
       <div class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Registration</span>
-        <span class="flight-detailed__detail-value">{{ flight.registration || '—' }}</span>
+        <span class="flight-detailed__detail-value">{{ flight.aircraft.registration || '—' }}</span>
       </div>
       <div class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Operator</span>
-        <span class="flight-detailed__detail-value">{{ flight.operator_iata || flight.operator_icao || '—' }}</span>
+        <span class="flight-detailed__detail-value">{{ flight.airline.operator_iata || flight.airline.operator_icao || '—' }}</span>
       </div>
-      <div class="flight-detailed__detail-item">
-        <span class="flight-detailed__detail-label">Filed speed</span>
-        <span class="flight-detailed__detail-value">{{ flight.filed_airspeed }} kt</span>
-      </div>
-      <div v-if="flight.codeshares_iata?.length" class="flight-detailed__detail-item">
+      <div v-if="flight.route.codeshares_iata?.length" class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Codeshares</span>
-        <span class="flight-detailed__detail-value">{{ flight.codeshares_iata.join(', ') }}</span>
+        <span class="flight-detailed__detail-value">{{ flight.route.codeshares_iata.join(', ') }}</span>
       </div>
       <div
         class="flight-detailed__detail-item"
-        :class="{ 'flight-detailed__detail-item--flag': flight.diverted || flight.cancelled }"
+        :class="{ 'flight-detailed__detail-item--flag': flight.route.diverted || flight.route.cancelled }"
       >
         <span class="flight-detailed__detail-label">Flags</span>
         <span class="flight-detailed__detail-value">
-          <template v-if="!flight.diverted && !flight.cancelled">None</template>
-          <template v-else>{{ [flight.diverted ? 'Diverted' : null, flight.cancelled ? 'Cancelled' : null].filter(Boolean).join(' · ') }}</template>
+          <template v-if="!flight.route.diverted && !flight.route.cancelled">None</template>
+          <template v-else>{{ [flight.route.diverted ? 'Diverted' : null, flight.route.cancelled ? 'Cancelled' : null].filter(Boolean).join(' · ') }}</template>
         </span>
       </div>
     </div>
@@ -255,6 +311,8 @@ function formatDelay(seconds: number): string {
 .flight-detailed__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--w-divider);
 
@@ -264,6 +322,30 @@ function formatDelay(seconds: number): string {
     gap: 0.75rem;
     min-width: 0;
   }
+}
+
+.flight-detailed__airline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.flight-detailed__airline-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.flight-detailed__airline-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--w-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .flight-detailed__ident {
@@ -483,6 +565,13 @@ function formatDelay(seconds: number): string {
   color: oklch(0.72 0.14 200);
 }
 
+// ── ADS-B state strip ─────────────────────────────────────────────────────────
+.flight-detailed__adsb {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--w-divider);
+}
+
 // ── Details strip ─────────────────────────────────────────────────────────────
 .flight-detailed__details {
   display: flex;
@@ -516,5 +605,25 @@ function formatDelay(seconds: number): string {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--w-text);
+}
+
+// ── Aircraft image ────────────────────────────────────────────────────────────
+.flight-detailed__aircraft-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem 1.25rem;
+  border-top: 1px solid var(--w-divider);
+  background: var(--w-bg);
+  min-height: 160px;
+}
+
+.flight-detailed__aircraft-image {
+  max-width: 100%;
+  max-height: 200px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 </style>

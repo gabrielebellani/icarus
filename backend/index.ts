@@ -1,5 +1,4 @@
 import {Database} from 'bun:sqlite';
-import {RedisClient} from "bun"
 import runMigrations from './migrations/migrations.ts';
 import {bootstrapSuperuser, getApplicationPublicConfig} from './controllers/application.controller.ts';
 import {
@@ -30,11 +29,10 @@ import {
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
 import {jsonResponse} from "./utils/response.util.ts";
-import {deleteExpiredRadars} from "./utils/cron.util.ts";
+import {cleanupExpiredTrackedFlights, deleteExpiredRadars} from "./utils/cron.util.ts";
 import {env} from "./utils/env.ts";
 
 export const db = new Database(env.DB_PATH, {create: true});
-export const redis = new RedisClient()
 
 // Execute migrations
 await runMigrations();
@@ -46,6 +44,10 @@ Bun.cron("0 1 * * *", () => {
     deleteExpiredRadars();
 });
 
+Bun.cron("* * * * *", () => {
+    cleanupExpiredTrackedFlights();
+});
+
 Bun.serve({
     port: env.PORT,
     routes: {
@@ -53,7 +55,6 @@ Bun.serve({
             return jsonResponse({
                 status: "ok",
                 database: db.query("SELECT 1") ? "connected" : "error",
-                redis: await redis.ping() ? "connected" : "error",
             })
         },
         '/api/config': (request) => getApplicationPublicConfig(request),

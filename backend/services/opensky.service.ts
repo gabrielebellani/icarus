@@ -40,4 +40,28 @@ export class OpenSkyService extends ThirdPartyHttpService{
 
         return apiResponse.content.states.map((state:any)=> OpenSkyState.fromOpenSkyApi(state)) as OpenSkyState[];
     }
+
+    public async fetchStateByIcao24(icao24: string): Promise<OpenSkyState | null> {
+        const endpoint = this.host.concat('states/all')
+        const url = new URL(endpoint)
+        url.searchParams.set('icao24', icao24.toLowerCase())
+
+        try {
+            const apiResponse: any = await this.fetch(
+                url,
+                this.key
+                    ? {"Authorization": `Bearer ${this.key}`}
+                    : undefined
+            )
+
+            if (!apiResponse || !apiResponse.content.states || apiResponse.content.states.length === 0) {
+                return null;
+            }
+
+            return OpenSkyState.fromOpenSkyApi(apiResponse.content.states[0]);
+        } catch (error) {
+            console.error(`[OpenSkyService] Error fetching state for icao24 ${icao24}:`, error);
+            return null;
+        }
+    }
 }

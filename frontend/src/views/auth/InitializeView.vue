@@ -1,30 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
-import { z } from 'zod'
-import { initializeUser } from '@/api/auth'
-import { HttpError } from '@/api/client'
+import {ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useForm} from 'vee-validate'
+import {toTypedSchema} from '@vee-validate/zod'
+import {z} from 'zod'
+import {initializeUser} from '@/api/auth'
+import {HttpError} from '@/api/client'
 import AuthLayout from './AuthLayout.vue'
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormDescription,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import {FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from '@/components/ui/form'
+import {Input} from '@/components/ui/input'
+import {Button} from '@/components/ui/button'
+import {Alert, AlertDescription} from '@/components/ui/alert'
 
 const router = useRouter()
 

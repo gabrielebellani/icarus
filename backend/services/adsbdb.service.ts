@@ -23,4 +23,20 @@ export class AdsbdbService extends ThirdPartyHttpService {
 
         return null
     }
+
+    /**
+     * Fetch aircraft information by registration (N-number, EC-*, etc.).
+     * AdsbDB auto-detects mode_s vs registration format and returns mode_s in response.
+     */
+    public async fetchAircraftInformationByRegistration(registration: string) {
+        const apiResponse: ThirdPartyHttpServiceResponse = <ThirdPartyHttpServiceResponse>await this.fetch('aircraft/' + registration)
+
+        if(apiResponse.ok){
+            // Extract mode_s (icao24) from response
+            const icao24 = apiResponse.content.response.aircraft.mode_s;
+            return AircraftInfo.buildFromAdsbDbResult(icao24, apiResponse.content.response.aircraft)
+        }
+
+        return null
+    }
 }

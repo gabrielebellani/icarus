@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getTracking, stopTracking } from '@/api/flight'
-import type { Flight, TrackingRecord } from '@/types/flight'
+import type { TrackedFlightPayload, TrackingRecord, FlightDataSource, FlightPhase } from '@/types/flight'
 import FlightSearchForm from '@/components/flight/FlightSearchForm.vue'
 import FlightTracking from '@/components/flight/FlightTracking.vue'
 import { Button } from '@/components/ui/button'
@@ -17,11 +17,43 @@ const prefilledIdentifier = computed(() => String(route.query.identifier ?? ''))
 const prefilledDate = computed(() => String(route.query.date ?? ''))
 
 const isTracking = ref(false)
-const trackedFlight = ref<Flight | null>(null)
+const trackedFlight = ref<TrackedFlightPayload | null>(null)
 
-// Resolve the active flight from a tracking record
-function flightFromRecord(record: TrackingRecord): Flight | null {
-  return record.payload ?? null
+interface TrackingMeta {
+  phase: FlightPhase
+  dataSource: FlightDataSource
+  degradedMode: boolean
+}
+const trackingMeta = ref<TrackingMeta | null>(null)
+
+// Degraded-mode alert dismissal — reset whenever we (re-)enter degraded mode
+const degradedAlertDismissed = ref(false)
+watch(
+  () => trackingMeta.value?.degradedMode,
+  (isDegraded, wasDegraded) => {
+    if (isDegraded && !wasDegraded) {
+      degradedAlertDismissed.value = false
+    }
+  },
+)
+
+function dismissDegradedAlert() {
+  degradedAlertDismissed.value = true
+}
+
+// Polling configuration: normal cadence vs. reduced cadence while degraded
+// (FlightAware-only fallback, to limit costly calls).
+const NORMAL_POLL_INTERVAL = 60 * 1000 // 60 seconds
+const DEGRADED_POLL_INTERVAL = 5 * 60 * 1000 // 5 minutes
+let pollTimerId: ReturnType<typeof setInterval> | null = null
+
+function updateFromRecord(record: TrackingRecord) {
+  trackedFlight.value = record.payload
+  trackingMeta.value = {
+    phase: record.phase,
+    dataSource: record.data_source,
+    degradedMode: record.degraded_mode,
+  }
 }
 
 const { state: pageState, error: pageError, run, retry } = useAsyncPageState(
@@ -36,13 +68,59 @@ run(async () => {
     return
   }
 
-  trackedFlight.value = flightFromRecord(record)
+  updateFromRecord(record)
   isTracking.value = true
+  startPolling()
 })
 
+function currentPollInterval(): number {
+  return trackingMeta.value?.degradedMode ? DEGRADED_POLL_INTERVAL : NORMAL_POLL_INTERVAL
+}
+
+function startPolling() {
+  if (pollTimerId) {
+    clearInterval(pollTimerId)
+  }
+
+  pollTimerId = setInterval(poll, currentPollInterval())
+}
+
+async function poll() {
+  try {
+    const record = await getTracking()
+    if (record === null) {
+      // Tracking ended server-side
+      isTracking.value = false
+      trackedFlight.value = null
+      trackingMeta.value = null
+      stopPolling()
+      return
+    }
+
+    const wasDegraded = trackingMeta.value?.degradedMode ?? false
+    updateFromRecord(record)
+
+    // Cadence changed (entered/exited degraded mode) — restart interval with new timing
+    if (wasDegraded !== record.degraded_mode) {
+      startPolling()
+    }
+  } catch (error) {
+    // Swallow polling errors, keep showing last known data
+    console.warn('Error polling tracked flight:', error)
+  }
+}
+
+function stopPolling() {
+  if (pollTimerId) {
+    clearInterval(pollTimerId)
+    pollTimerId = null
+  }
+}
+
 function onTracked(record: TrackingRecord) {
-  trackedFlight.value = flightFromRecord(record)
+  updateFromRecord(record)
   isTracking.value = true
+  startPolling()
 }
 
 const isStoppingTracking = ref(false)
@@ -55,13 +133,19 @@ async function onStopTracking() {
   try {
     await stopTracking()
     trackedFlight.value = null
+    trackingMeta.value = null
     isTracking.value = false
+    stopPolling()
   } catch {
     stopError.value = 'Failed to stop tracking. Please try again.'
   } finally {
     isStoppingTracking.value = false
   }
 }
+
+onUnmounted(() => {
+  stopPolling()
+})
 </script>
 
 <template>
@@ -89,7 +173,12 @@ async function onStopTracking() {
         <div v-if="stopError" class="dashboard__stop-error">{{ stopError }}</div>
 
         <template v-if="trackedFlight">
-          <FlightTracking :flight="trackedFlight" @stop-tracking="onStopTracking" />
+          <FlightTracking
+            :flight="trackedFlight"
+            :data-source="trackingMeta?.dataSource ?? null"
+            :degraded-mode="trackingMeta?.degradedMode ?? false"
+            @stop-tracking="onStopTracking"
+          />
         </template>
 
         <!-- Payload not yet available (null payload) -->
@@ -108,6 +197,28 @@ async function onStopTracking() {
       </div>
 
     </main>
+
+    <!-- Fixed degraded-mode alert (bottom-left) -->
+    <Transition name="fade">
+      <div v-if="trackingMeta?.degradedMode && !degradedAlertDismissed" class="dashboard__degraded-alert" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Heads up: FlightAware calls have a cost, so we're reducing the update frequency to 5 minutes.</span>
+        <button
+          class="dashboard__degraded-alert-close"
+          @click="dismissDegradedAlert"
+          aria-label="Dismiss"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -188,5 +299,63 @@ async function onStopTracking() {
       max-width: 28ch;
     }
   }
+
+  // ─── Degraded-mode alert (fixed bottom-left) ──────────────────────────────
+  &__degraded-alert {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    max-width: 360px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    background: oklch(0.2 0.06 70);
+    border: 1px solid oklch(0.4 0.1 70);
+    color: oklch(0.85 0.12 70);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__degraded-alert-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+
+    &:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

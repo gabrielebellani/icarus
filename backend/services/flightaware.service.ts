@@ -53,7 +53,8 @@ export class FlightawareService extends ThirdPartyHttpService {
         const response = <ThirdPartyHttpServiceResponse>await this.fetch(
             endpoint,
             {
-                'x-apikey': this.key
+                'x-apikey': this.key,
+                'Accept-Language': 'en'
             },
             undefined,
             undefined,

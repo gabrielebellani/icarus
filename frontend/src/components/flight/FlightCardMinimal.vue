@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Flight } from '@/types/flight'
+import type { TrackedFlightPayload } from '@/types/flight'
 
 const props = defineProps<{
-  flight: Flight
+  flight: TrackedFlightPayload
   showIcao: boolean
 }>()
 
@@ -13,18 +13,18 @@ const emit = defineEmits<{
 
 const displayIdent = computed(() =>
   props.showIcao
-    ? props.flight.ident_icao || props.flight.ident_iata
-    : props.flight.ident_iata || props.flight.ident_icao,
+    ? props.flight.route.ident_icao || props.flight.route.ident_iata
+    : props.flight.route.ident_iata || props.flight.route.ident_icao,
 )
 
 // Best available departure time: actual wheels-off > estimated > scheduled gate out
 const departureTime = computed(() =>
-  props.flight.actual_off || props.flight.estimated_off || props.flight.scheduled_out,
+  props.flight.schedule.actual_off || props.flight.schedule.estimated_off || props.flight.schedule.scheduled_out,
 )
 
 // Best available arrival time: actual gate in > estimated > scheduled gate in
 const arrivalTime = computed(() =>
-  props.flight.actual_in || props.flight.estimated_in || props.flight.scheduled_in,
+  props.flight.schedule.actual_in || props.flight.schedule.estimated_in || props.flight.schedule.scheduled_in,
 )
 
 function formatTime(iso: string | null): string {
@@ -38,19 +38,19 @@ function formatDelay(seconds: number): string {
   return seconds < 0 ? `${m}m early` : `+${m}m`
 }
 
-const departureStatus = computed(() => formatDelay(props.flight.departure_delay))
-const arrivalStatus = computed(() => formatDelay(props.flight.arrival_delay))
+const departureStatus = computed(() => formatDelay(props.flight.schedule.departure_delay))
+const arrivalStatus = computed(() => formatDelay(props.flight.schedule.arrival_delay))
 
-const isOnTimeDep = computed(() => props.flight.departure_delay === 0)
-const isOnTimeArr = computed(() => props.flight.arrival_delay === 0)
-const isEarlyDep = computed(() => props.flight.departure_delay < 0)
-const isEarlyArr = computed(() => props.flight.arrival_delay < 0)
+const isOnTimeDep = computed(() => props.flight.schedule.departure_delay === 0)
+const isOnTimeArr = computed(() => props.flight.schedule.arrival_delay === 0)
+const isEarlyDep = computed(() => props.flight.schedule.departure_delay < 0)
+const isEarlyArr = computed(() => props.flight.schedule.arrival_delay < 0)
 
 // Time remaining (only when in-flight)
 const timeRemaining = computed(() => {
-  const p = props.flight.progress_percent
+  const p = props.flight.route.progress_percent
   if (p <= 0 || p >= 100) return null
-  const arrival = props.flight.estimated_in || props.flight.scheduled_in
+  const arrival = props.flight.schedule.estimated_in || props.flight.schedule.scheduled_in
   if (!arrival) return null
   const ms = new Date(arrival).getTime() - Date.now()
   if (ms <= 0) return null
@@ -67,13 +67,13 @@ function formatDuration(seconds: number): string {
 }
 
 const bottomRight = computed(() =>
-  timeRemaining.value ?? formatDuration(props.flight.filed_ete),
+  timeRemaining.value ?? formatDuration(props.flight.route.filed_ete),
 )
 
 const originTerminal = computed(() => {
   const parts = [
-    props.flight.terminal_origin ? `Terminal ${props.flight.terminal_origin}` : null,
-    props.flight.gate_origin ? `Gate ${props.flight.gate_origin}` : null,
+    props.flight.schedule.terminal_origin ? `Terminal ${props.flight.schedule.terminal_origin}` : null,
+    props.flight.schedule.gate_origin ? `Gate ${props.flight.schedule.gate_origin}` : null,
   ].filter(Boolean)
   return parts.length ? parts.join('  ') : null
 })
@@ -91,14 +91,14 @@ const originTerminal = computed(() => {
       >
         {{ displayIdent }}
       </button>
-      <span class="flight-minimal__aircraft">{{ flight.aircraft_type }}</span>
+      <span class="flight-minimal__aircraft">{{ flight.aircraft.type }}</span>
     </div>
 
     <!-- Route row -->
     <div class="flight-minimal__route">
       <!-- Origin -->
       <div class="flight-minimal__end">
-        <span class="flight-minimal__iata">{{ flight.origin.code_iata }}</span>
+        <span class="flight-minimal__iata">{{ flight.route.origin.code_iata }}</span>
         <span class="flight-minimal__time">{{ formatTime(departureTime) }}</span>
       </div>
 
@@ -112,7 +112,7 @@ const originTerminal = computed(() => {
       <!-- Destination -->
       <div class="flight-minimal__end flight-minimal__end--right">
         <span class="flight-minimal__time">{{ formatTime(arrivalTime) }}</span>
-        <span class="flight-minimal__iata">{{ flight.destination.code_iata }}</span>
+        <span class="flight-minimal__iata">{{ flight.route.destination.code_iata }}</span>
       </div>
     </div>
 
@@ -140,13 +140,13 @@ const originTerminal = computed(() => {
     <div
       class="flight-minimal__progress-track"
       role="progressbar"
-      :aria-valuenow="flight.progress_percent"
+      :aria-valuenow="flight.route.progress_percent"
       aria-valuemin="0"
       aria-valuemax="100"
     >
       <div
         class="flight-minimal__progress-fill"
-        :style="{ width: `${Math.max(flight.progress_percent, 4)}%` }"
+        :style="{ width: `${Math.max(flight.route.progress_percent, 4)}%` }"
       >
         <svg class="flight-minimal__progress-plane" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
