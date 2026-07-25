@@ -25,6 +25,12 @@ services:
       JETAPI_URL: http://jetapi-scraper:8922
       FRONTEND_URL: ${FRONTEND_URL}
       DB_PATH: /app/data/icarus-db.sqlite
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
     volumes:
       - backend-data:/app/data
     depends_on:

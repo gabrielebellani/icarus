@@ -114,9 +114,15 @@ _Note:_ if you want to add other data sources, please open an issue or a pull re
 | `FRONTEND_PORT`        | No       | `8920`                       | Port to expose the frontend on the host     |
 | `DB_PATH`              | No       | `/app/data/icarus-db.sqlite` | Path to the SQLite database                 |
 | `DISABLE_REGISTRATION` | No       | `true`                       | Disable user registration                   |
+| `SMTP_HOST`            | No       | -                            | SMTP server host for password recovery emails |
+| `SMTP_PORT`            | No       | -                            | SMTP server port                            |
+| `SMTP_SECURE`          | No       | `false`                      | Use TLS for the SMTP connection             |
+| `SMTP_USER`            | No       | -                            | SMTP auth username                          |
+| `SMTP_PASSWORD`        | No       | -                            | SMTP auth password                          |
+| `SMTP_FROM`            | No       | -                            | "From" address for password recovery emails |
 
-> Note: password recovery currently logs the reset token to the backend
-> container logs — email delivery (SMTP) is not implemented yet.
+> Note: password recovery is only available when all `SMTP_*` variables are
+> set; otherwise the recovery endpoint stays disabled.
 
 ## Installation (integrate in existing Docker Compose setup)
 
