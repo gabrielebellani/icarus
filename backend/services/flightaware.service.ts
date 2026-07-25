@@ -60,14 +60,17 @@ export class FlightawareService extends ThirdPartyHttpService {
         // Cursor-based (not modulo-based) so fetchUsage()'s own tracked request doesn't
         // shift the cadence, and so concurrent calls can't both see the same boundary:
         // this is set synchronously, before the await below, closing the race window.
-        // A cursor left over from a previous month is always > this month's (low) count,
-        // so that case is treated as "never checked this month" rather than stalling.
+        // The cursor is scoped to a month: a cursor left over from a previous month can
+        // land on the same count as this month's (both hit the same round numbers), so
+        // magnitude alone can't tell "already checked this month" from "stale" apart.
+        const checkedAtMonth = PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_MONTH, this.userId)?.value;
         const storedCheckedAtCount = PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_AT_COUNT, this.userId)?.value ?? 0;
-        const checkedAtCount = storedCheckedAtCount > requestsThisMonth ? 0 : storedCheckedAtCount;
+        const checkedAtCount = checkedAtMonth === currentMonth ? storedCheckedAtCount : 0;
         if (requestsThisMonth - checkedAtCount < USAGE_CHECK_INTERVAL) {
             return;
         }
         PreferencesRepository.setPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_AT_COUNT, this.userId, requestsThisMonth);
+        PreferencesRepository.setPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_MONTH, this.userId, currentMonth);
 
         const usage: any = await this.fetchUsage();
         if (usage.total_cost >= BLOCK_THRESHOLD_USD) {

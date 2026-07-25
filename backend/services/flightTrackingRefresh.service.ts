@@ -7,6 +7,7 @@ import {db} from '../index.ts';
 import {getFlightawareKey, getOpenSkyKey} from '../utils/third_party.util.ts';
 import {FlightawareService} from './flightaware.service.ts';
 import {normalizeFlightPayload, hasLanded} from '../utils/flight.util.ts';
+import {ThirdPartyQuotaExceededError} from '../errors/ThirdPartyQuotaExceededError.ts';
 
 type FlightPhase = 'ground' | 'airborne' | 'completed';
 type DataSource = 'flightaware' | 'adsb.lol' | 'opensky' | null;
@@ -470,6 +471,9 @@ export class FlightTrackingRefreshService {
 
             return null;
         } catch (error) {
+            if (error instanceof ThirdPartyQuotaExceededError) {
+                throw error;
+            }
             console.error(`[FlightTrackingRefreshService] Error fetching updated flight info:`, error);
             return null;
         }
