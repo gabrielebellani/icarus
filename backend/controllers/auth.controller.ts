@@ -5,7 +5,7 @@ import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from 
 import {jsonResponse} from '../utils/response.util.ts';
 import {authenticate, isAuthError} from '../middleware/auth.ts';
 import {env} from "../utils/env.ts";
-import {getPreference, getAppPreference} from "./preferences.controller.ts";
+import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 import {sendPasswordResetEmail} from "../utils/email.util.ts";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export async function registerUser(request: Request): Promise<Response> {
     const { username, password, email } = parsed.data;
 
     // Check if registration is disabled (superuser preference, user_id=1)
-    const disabledPref = getPreference(PreferenceKeyEnum.DISABLE_REGISTRATION, 1)
+    const disabledPref = PreferencesRepository.getPreference(PreferenceKeyEnum.DISABLE_REGISTRATION, 1)
     if (disabledPref !== null && disabledPref.value) {
         return jsonResponse({ error: 'Registration is disabled' }, 403);
     }
@@ -192,7 +192,7 @@ export async function requestPasswordRecovery(request: Request): Promise<Respons
     const { username } = parsed.data;
 
     // Check if password recovery is available
-    const recoveryAvailablePref = getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE);
+    const recoveryAvailablePref = PreferencesRepository.getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE);
     if (!recoveryAvailablePref || !recoveryAvailablePref.value) {
         return jsonResponse({ error: 'Password recovery not available, contact the administrator' }, 403);
     }

@@ -3,7 +3,7 @@ import {OpenSkyState} from "../classes/OpenSkyState.ts";
 import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 import {ApiRequestTrackingRepository} from "../repositories/apiRequestTracking.repository.ts";
-import {getPreference, setPreference} from "../controllers/preferences.controller.ts";
+import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {ThirdPartyQuotaExceededError} from "../errors/ThirdPartyQuotaExceededError.ts";
 
@@ -32,7 +32,7 @@ export class OpenSkyService extends ThirdPartyHttpService{
     private async enforceDailyQuota(): Promise<void> {
         const now = new Date();
 
-        const blockedUntil = getPreference(PreferenceKeyEnum.OPEN_SKY_BLOCKED_UNTIL, this.userId)?.value;
+        const blockedUntil = PreferencesRepository.getPreference(PreferenceKeyEnum.OPEN_SKY_BLOCKED_UNTIL, this.userId)?.value;
         if (blockedUntil && now < new Date(blockedUntil)) {
             throw new ThirdPartyQuotaExceededError(
                 ThirdPartyServiceEnum.OPENSKY,
@@ -40,13 +40,13 @@ export class OpenSkyService extends ThirdPartyHttpService{
             );
         }
 
-        const threshold = getPreference(PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, this.userId)?.value ?? DEFAULT_DAILY_THRESHOLD;
+        const threshold = PreferencesRepository.getPreference(PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, this.userId)?.value ?? DEFAULT_DAILY_THRESHOLD;
         const today = formatISO(now, {representation: 'date'});
         const todayCount = ApiRequestTrackingRepository.getRequestCount(ThirdPartyServiceEnum.OPENSKY, this.userId, today, today);
 
         if (todayCount >= threshold - 1) {
             const nextReset = nextOneAmUtc(now);
-            setPreference(PreferenceKeyEnum.OPEN_SKY_BLOCKED_UNTIL, this.userId, nextReset.toISOString());
+            PreferencesRepository.setPreference(PreferenceKeyEnum.OPEN_SKY_BLOCKED_UNTIL, this.userId, nextReset.toISOString());
             throw new ThirdPartyQuotaExceededError(
                 ThirdPartyServiceEnum.OPENSKY,
                 `OpenSky daily request threshold reached. Calls are paused until ${nextReset.toISOString()}.`
@@ -99,6 +99,9 @@ export class OpenSkyService extends ThirdPartyHttpService{
 
             return OpenSkyState.fromOpenSkyApi(apiResponse.content.states[0]);
         } catch (error) {
+            if (error instanceof ThirdPartyQuotaExceededError) {
+                throw error;
+            }
             console.error(`[OpenSkyService] Error fetching state for icao24 ${icao24}:`, error);
             return null;
         }

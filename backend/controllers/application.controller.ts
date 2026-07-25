@@ -2,7 +2,7 @@ import {db} from "../index.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {env} from "../utils/env.ts";
 import {jsonResponse} from "../utils/response.util.ts";
-import {getAppPreference} from "./preferences.controller.ts";
+import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 import {initEmailTransporter} from "../utils/email.util.ts";
 
 export async function bootstrapSuperuser(): Promise<void> {
@@ -58,8 +58,8 @@ export async function bootstrapSuperuser(): Promise<void> {
 }
 
 export function getApplicationPublicConfig(request: Request){
-    const registrationDisabledPref = getAppPreference(PreferenceKeyEnum.DISABLE_REGISTRATION)
-    const passwordRecoveryAvailable = getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE)
+    const registrationDisabledPref = PreferencesRepository.getAppPreference(PreferenceKeyEnum.DISABLE_REGISTRATION)
+    const passwordRecoveryAvailable = PreferencesRepository.getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE)
     return jsonResponse({
         "registration_disabled": registrationDisabledPref ? registrationDisabledPref.value as boolean : false,
         "password_recovery_available": passwordRecoveryAvailable ? passwordRecoveryAvailable.value as boolean : false

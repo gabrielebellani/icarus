@@ -3,9 +3,9 @@ import {db} from "../index.ts";
 import {Preference} from "../classes/Preference.ts";
 import {jsonResponse} from "../utils/response.util.ts";
 import {PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
-import {AppPreference} from "../classes/AppPreference.ts";
 import {getFlightawareKey} from "../utils/third_party.util.ts";
 import {FlightawareService, isFlightawareBudgetBlocked} from "../services/flightaware.service.ts";
+import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 
 export async function getUserPreferences(request: Request) {
     const auth = await authenticate(request);
@@ -13,7 +13,7 @@ export async function getUserPreferences(request: Request) {
 
     const userId = auth.user_id;
 
-    const rawPreferences = getPreferences(userId)
+    const rawPreferences = PreferencesRepository.getPreferences(userId)
 
     return jsonResponse(Preference.fromDBBulk(rawPreferences))
 }
@@ -40,20 +40,14 @@ export async function setUserPreferences(request: Request) {
     try {
         db.transaction(() => {
             for (const prefData of body) {
-                const pref = new Preference(userId, prefData.key, prefData.value);
-
-                if (!PreferenceUserCanSet.includes(pref.key)) {
+                if (!PreferenceUserCanSet.includes(prefData.key)) {
                     continue;
                 }
 
-                db.prepare(`
-                    INSERT INTO preferences (user_id, key, value)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
-                `).run(userId, pref.key, pref.value);
+                PreferencesRepository.setPreference(prefData.key, userId, prefData.value);
             }
         })();
-        return jsonResponse({message: 'Preferences updated successfully', preferences: getPreferences(userId)});
+        return jsonResponse({message: 'Preferences updated successfully', preferences: PreferencesRepository.getPreferences(userId)});
     } catch (error) {
         return jsonResponse({error: error instanceof Error ? error.message : 'An error occurred'}, 500);
     }
@@ -85,34 +79,4 @@ export async function getThirdPartyAPIUsage(request: Request) {
         }
     })
 
-}
-
-export function setPreference(key: PreferenceKeyEnum, userId: number, value: any): void {
-    const pref = new Preference(userId, key, value);
-    db.prepare(`
-        INSERT INTO preferences (user_id, key, value)
-        VALUES (?, ?, ?)
-        ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
-    `).run(userId, pref.key, pref.value);
-}
-
-export function getPreference(key: PreferenceKeyEnum, userId: number): Preference | null {
-    const preference = db.query("SELECT * FROM preferences WHERE user_id = ? AND key = ?").get(userId, key)
-    if (preference === null) {
-        return null
-    }
-    return Preference.fromDB(preference)
-}
-
-export function getAppPreference(key: PreferenceKeyEnum): AppPreference | null {
-    const preference = db.query("SELECT * FROM preferences WHERE user_id IS NULL AND key = ?").get(key)
-    if (preference === null) {
-        return null
-    }
-    return AppPreference.fromDB(preference)
-}
-
-export function getPreferences(userId: number){
-    return db.query("SELECT * FROM preferences WHERE user_id = ?")
-        .all(userId)
 }

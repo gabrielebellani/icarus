@@ -2,7 +2,7 @@ import {endOfDay, formatISO, startOfDay, startOfMonth, subMinutes} from "date-fn
 import {ThirdPartyHttpService, type ThirdPartyHttpServiceResponse} from "./thirdPartyHttp.service.ts";
 import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 import {ApiRequestTrackingRepository} from "../repositories/apiRequestTracking.repository.ts";
-import {getPreference, setPreference} from "../controllers/preferences.controller.ts";
+import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {ThirdPartyQuotaExceededError} from "../errors/ThirdPartyQuotaExceededError.ts";
 
@@ -12,13 +12,16 @@ const BLOCK_THRESHOLD_USD = 4.9;
 // Real cost is only known on demand (account/usage), so it's only re-checked periodically.
 const USAGE_CHECK_INTERVAL = 50;
 
+function currentMonthKey(): string {
+    return formatISO(new Date(), {representation: 'date'}).slice(0, 7); // YYYY-MM
+}
+
 /** Whether the user's FlightAware calls are currently blocked by the monthly budget limit. */
 export function isFlightawareBudgetBlocked(userId: number): boolean {
-    if (getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, userId)?.value === true) {
+    if (PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, userId)?.value === true) {
         return false;
     }
-    const currentMonth = formatISO(new Date(), {representation: 'date'}).slice(0, 7); // YYYY-MM
-    return getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, userId)?.value === currentMonth;
+    return PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, userId)?.value === currentMonthKey();
 }
 
 export class FlightawareService extends ThirdPartyHttpService {
@@ -38,12 +41,12 @@ export class FlightawareService extends ThirdPartyHttpService {
      * fetchUsage() itself is exempt so the user can always see current cost to make that call.
      */
     private async enforceMonthlyBudget(): Promise<void> {
-        if (getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, this.userId)?.value === true) {
+        if (PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, this.userId)?.value === true) {
             return;
         }
 
-        const currentMonth = formatISO(new Date(), {representation: 'date'}).slice(0, 7); // YYYY-MM
-        if (getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId)?.value === currentMonth) {
+        const currentMonth = currentMonthKey();
+        if (PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId)?.value === currentMonth) {
             throw new ThirdPartyQuotaExceededError(
                 ThirdPartyServiceEnum.FLIGHTAWARE,
                 `FlightAware's $${MONTHLY_FREE_CREDIT_USD} monthly free credit has been reached. Enable "Allow exceeding FlightAware monthly limit" in Preferences to keep making calls.`
@@ -54,13 +57,21 @@ export class FlightawareService extends ThirdPartyHttpService {
         const today = formatISO(new Date(), {representation: 'date'});
         const requestsThisMonth = ApiRequestTrackingRepository.getRequestCount(ThirdPartyServiceEnum.FLIGHTAWARE, this.userId, monthStart, today);
 
-        if (requestsThisMonth === 0 || requestsThisMonth % USAGE_CHECK_INTERVAL !== 0) {
+        // Cursor-based (not modulo-based) so fetchUsage()'s own tracked request doesn't
+        // shift the cadence, and so concurrent calls can't both see the same boundary:
+        // this is set synchronously, before the await below, closing the race window.
+        // A cursor left over from a previous month is always > this month's (low) count,
+        // so that case is treated as "never checked this month" rather than stalling.
+        const storedCheckedAtCount = PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_AT_COUNT, this.userId)?.value ?? 0;
+        const checkedAtCount = storedCheckedAtCount > requestsThisMonth ? 0 : storedCheckedAtCount;
+        if (requestsThisMonth - checkedAtCount < USAGE_CHECK_INTERVAL) {
             return;
         }
+        PreferencesRepository.setPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_AT_COUNT, this.userId, requestsThisMonth);
 
         const usage: any = await this.fetchUsage();
         if (usage.total_cost >= BLOCK_THRESHOLD_USD) {
-            setPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId, currentMonth);
+            PreferencesRepository.setPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId, currentMonth);
             throw new ThirdPartyQuotaExceededError(
                 ThirdPartyServiceEnum.FLIGHTAWARE,
                 `FlightAware's $${MONTHLY_FREE_CREDIT_USD} monthly free credit has been reached. Enable "Allow exceeding FlightAware monthly limit" in Preferences to keep making calls.`

@@ -284,3 +284,5 @@ Licensed under the [AGPL-3.0 License](LICENSE).
 
 Contributions welcome! Please open issues and pull requests on GitHub.
 
+### AI usage note:
+**Did AI generated code in this repository?** Yes, part of the code, mainly on the frontend, is AI generated.
