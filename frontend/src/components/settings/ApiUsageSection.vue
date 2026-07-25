@@ -73,43 +73,55 @@ const emit = defineEmits<{ scrollToPreferences: [] }>()
       <AlertDescription>{{ errorMessage }}</AlertDescription>
     </Alert>
 
-    <div v-else-if="usage" class="usage-card">
-      <div class="usage-card__header">
-        <span class="usage-card__service">FlightAware</span>
+    <template v-else-if="usage">
+      <Alert v-if="usage.quota_exceeded" class="mb-4 alert--warning">
+        <AlertTriangle :size="16" />
+        <AlertDescription>
+          FlightAware's $5 monthly free credit has been reached, so Icarus has paused further
+          calls for this month. To keep using FlightAware anyway (you may be billed), enable
+          "Allow exceeding FlightAware monthly limit" in
+          <button class="alert-link" @click="emit('scrollToPreferences')">Preferences</button>.
+        </AlertDescription>
+      </Alert>
+
+      <div class="usage-card">
+        <div class="usage-card__header">
+          <span class="usage-card__service">FlightAware</span>
+        </div>
+        <div class="usage-grid">
+          <div class="usage-stat">
+            <span class="usage-stat__value">{{ usage.total_calls.toLocaleString() }}</span>
+            <span class="usage-stat__label">Total calls</span>
+          </div>
+          <div class="usage-stat">
+            <span class="usage-stat__value usage-stat__value--success">
+              {{ usage.total_successful_calls.toLocaleString() }}
+            </span>
+            <span class="usage-stat__label">Successful</span>
+          </div>
+          <div class="usage-stat">
+            <span class="usage-stat__value usage-stat__value--danger">
+              {{ usage.total_failed_calls.toLocaleString() }}
+            </span>
+            <span class="usage-stat__label">Failed</span>
+          </div>
+          <div class="usage-stat">
+            <span class="usage-stat__value">{{ usage.total_pages.toLocaleString() }}</span>
+            <span class="usage-stat__label">Pages</span>
+          </div>
+          <div class="usage-stat">
+            <span class="usage-stat__value">{{ usd.format(usage.total_cost) }}</span>
+            <span class="usage-stat__label">Total cost</span>
+          </div>
+          <div class="usage-stat">
+            <span class="usage-stat__value usage-stat__value--accent">
+              {{ usd.format(usage.total_discount_cost) }}
+            </span>
+            <span class="usage-stat__label">Discounted cost</span>
+          </div>
+        </div>
       </div>
-      <div class="usage-grid">
-        <div class="usage-stat">
-          <span class="usage-stat__value">{{ usage.total_calls.toLocaleString() }}</span>
-          <span class="usage-stat__label">Total calls</span>
-        </div>
-        <div class="usage-stat">
-          <span class="usage-stat__value usage-stat__value--success">
-            {{ usage.total_successful_calls.toLocaleString() }}
-          </span>
-          <span class="usage-stat__label">Successful</span>
-        </div>
-        <div class="usage-stat">
-          <span class="usage-stat__value usage-stat__value--danger">
-            {{ usage.total_failed_calls.toLocaleString() }}
-          </span>
-          <span class="usage-stat__label">Failed</span>
-        </div>
-        <div class="usage-stat">
-          <span class="usage-stat__value">{{ usage.total_pages.toLocaleString() }}</span>
-          <span class="usage-stat__label">Pages</span>
-        </div>
-        <div class="usage-stat">
-          <span class="usage-stat__value">{{ usd.format(usage.total_cost) }}</span>
-          <span class="usage-stat__label">Total cost</span>
-        </div>
-        <div class="usage-stat">
-          <span class="usage-stat__value usage-stat__value--accent">
-            {{ usd.format(usage.total_discount_cost) }}
-          </span>
-          <span class="usage-stat__label">Discounted cost</span>
-        </div>
-      </div>
-    </div>
+    </template>
   </section>
 </template>
 

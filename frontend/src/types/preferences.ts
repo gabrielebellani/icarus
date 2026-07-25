@@ -25,6 +25,8 @@ export interface FlightAwareUsage {
   total_discount_cost: number
   total_successful_calls: number
   total_failed_calls: number
+  /** True once Icarus has paused FlightAware calls for exceeding the monthly free-credit budget. */
+  quota_exceeded: boolean
 }
 
 export interface UsageResponse {

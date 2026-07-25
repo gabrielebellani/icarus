@@ -20,11 +20,13 @@ const errorMessage = ref<string | null>(null)
 // Form field values
 const flightAwareKey = ref<string>('')
 const openSkyKey = ref<string>('')
+const flightAwareAllowOverLimit = ref<boolean>(false)
 
 // Original values for dirty-checking
 const original = ref({
   flightAwareKey: '',
   openSkyKey: '',
+  flightAwareAllowOverLimit: false,
 })
 
 // Password field visibility toggles
@@ -41,6 +43,10 @@ function applyPreferences(prefs: Preference[]) {
       case 'opensky_network_api_key':
         openSkyKey.value = (pref.value as string) || ''
         original.value.openSkyKey = openSkyKey.value
+        break
+      case 'flightaware_allow_over_limit':
+        flightAwareAllowOverLimit.value = Boolean(pref.value)
+        original.value.flightAwareAllowOverLimit = flightAwareAllowOverLimit.value
         break
     }
   }
@@ -60,7 +66,8 @@ onMounted(async () => {
 const isDirty = computed(() => {
   return (
     flightAwareKey.value !== original.value.flightAwareKey ||
-    openSkyKey.value !== original.value.openSkyKey
+    openSkyKey.value !== original.value.openSkyKey ||
+    flightAwareAllowOverLimit.value !== original.value.flightAwareAllowOverLimit
   )
 })
 
@@ -71,6 +78,7 @@ async function save() {
   const updates = [
     { key: 'flightaware_api_key' as const, value: flightAwareKey.value },
     { key: 'opensky_network_api_key' as const, value: openSkyKey.value },
+    { key: 'flightaware_allow_over_limit' as const, value: flightAwareAllowOverLimit.value },
   ]
 
   try {
@@ -78,10 +86,12 @@ async function save() {
     original.value = {
       flightAwareKey: flightAwareKey.value,
       openSkyKey: openSkyKey.value,
+      flightAwareAllowOverLimit: flightAwareAllowOverLimit.value,
     }
     // Keep the preferences store in sync.
     prefsStore.updatePreference('flightaware_api_key', flightAwareKey.value)
     prefsStore.updatePreference('opensky_network_api_key', openSkyKey.value)
+    prefsStore.updatePreference('flightaware_allow_over_limit', flightAwareAllowOverLimit.value)
     status.value = 'success'
     setTimeout(() => {
       if (status.value === 'success') status.value = 'idle'
@@ -167,6 +177,23 @@ async function save() {
               <Eye v-else :size="16" />
             </Button>
           </div>
+        </div>
+
+        <!-- FlightAware monthly limit override -->
+        <div class="settings-field">
+          <label class="settings-field__checkbox-row" for="pref-fa-allow-over-limit">
+            <input
+              id="pref-fa-allow-over-limit"
+              type="checkbox"
+              v-model="flightAwareAllowOverLimit"
+            />
+            <span>Allow exceeding FlightAware's $5 monthly free limit</span>
+          </label>
+          <p class="settings-field__hint">
+            Icarus automatically stops calling FlightAware once your monthly usage nears $4.9, to
+            avoid unexpected charges. Enable this if you want calls to keep going past that point
+            (you will be billed by FlightAware for any usage above the free tier).
+          </p>
         </div>
       </div>
 
@@ -269,6 +296,22 @@ async function save() {
 
   &__secret-toggle {
     flex-shrink: 0;
+  }
+
+  &__checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--foreground);
+    cursor: pointer;
+  }
+
+  &__hint {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    margin: 0;
   }
 }
 

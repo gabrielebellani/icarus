@@ -5,7 +5,7 @@ import {jsonResponse} from "../utils/response.util.ts";
 import {PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";
 import {AppPreference} from "../classes/AppPreference.ts";
 import {getFlightawareKey} from "../utils/third_party.util.ts";
-import {FlightawareService} from "../services/flightaware.service.ts";
+import {FlightawareService, isFlightawareBudgetBlocked} from "../services/flightaware.service.ts";
 
 export async function getUserPreferences(request: Request) {
     const auth = await authenticate(request);
@@ -81,6 +81,7 @@ export async function getThirdPartyAPIUsage(request: Request) {
             total_discount_cost: usage.total_discount_cost,
             total_successful_calls: usage.total_successful_calls,
             total_failed_calls: usage.total_failed_calls,
+            quota_exceeded: isFlightawareBudgetBlocked(userId),
         }
     })
 

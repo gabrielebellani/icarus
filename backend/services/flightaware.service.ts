@@ -12,6 +12,15 @@ const BLOCK_THRESHOLD_USD = 4.9;
 // Real cost is only known on demand (account/usage), so it's only re-checked periodically.
 const USAGE_CHECK_INTERVAL = 50;
 
+/** Whether the user's FlightAware calls are currently blocked by the monthly budget limit. */
+export function isFlightawareBudgetBlocked(userId: number): boolean {
+    if (getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, userId)?.value === true) {
+        return false;
+    }
+    const currentMonth = formatISO(new Date(), {representation: 'date'}).slice(0, 7); // YYYY-MM
+    return getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, userId)?.value === currentMonth;
+}
+
 export class FlightawareService extends ThirdPartyHttpService {
     private readonly key: string
     override host = 'https://aeroapi.flightaware.com/aeroapi/'

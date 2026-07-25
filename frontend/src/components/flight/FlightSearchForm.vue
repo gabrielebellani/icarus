@@ -92,6 +92,9 @@ const onSearch = handleSubmit(async (values) => {
       errorMessage.value = body?.error ?? 'Bad request. Please check the flight code and date.'
     } else if (err instanceof HttpError && err.status === 422) {
       errorMessage.value = 'Invalid search parameters. Check the flight code and date.'
+    } else if (err instanceof HttpError && err.status === 429) {
+      const body = err.body as { error?: string }
+      errorMessage.value = body?.error ?? 'Third-party service quota exceeded. Please try again later.'
     } else {
       errorMessage.value = 'Search failed. Please try again.'
     }
@@ -115,6 +118,9 @@ async function confirmTracking() {
     if (err instanceof HttpError && err.status === 400) {
       const body = err.body as { error?: string }
       errorMessage.value = body?.error ?? 'Bad request. Failed to start tracking.'
+    } else if (err instanceof HttpError && err.status === 429) {
+      const body = err.body as { error?: string }
+      errorMessage.value = body?.error ?? 'Third-party service quota exceeded. Please try again later.'
     } else {
       errorMessage.value = 'Failed to start tracking. Please try again.'
     }

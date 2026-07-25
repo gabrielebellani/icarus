@@ -86,6 +86,9 @@ export function useTimetable({ trackingId, onAuthFailure }: UseTimetableOptions)
         onAuthFailure?.()
       } else if (err instanceof HttpError && err.status === 400) {
         error.value = 'Flightaware API key is missing.'
+      } else if (err instanceof HttpError && err.status === 429) {
+        const body = err.body as { error?: string } | null
+        error.value = body?.error ?? 'Third-party service quota exceeded. Please try again later.'
       } else {
         error.value = 'Failed to load timetable. Please try again.'
       }
