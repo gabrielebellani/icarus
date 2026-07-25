@@ -11,6 +11,15 @@ export class ApiRequestTrackingRepository {
         `).run(service, userId, date);
     }
 
+    static getRequestCount(service: ThirdPartyServiceEnum, userId: number, dateFrom: string, dateTo: string): number {
+        const row = db.prepare(`
+            SELECT COALESCE(SUM(requests), 0) as total
+            FROM third_party_api_requests
+            WHERE service = ? AND user_id = ? AND date >= ? AND date <= ?
+        `).get(service, userId, dateFrom, dateTo) as { total: number };
+        return row.total;
+    }
+
     static getUsageByUserAndDateRange(userId: number, dateFrom: string, dateTo: string): {
         service: string
         date: string

@@ -31,6 +31,7 @@ import {
 import {jsonResponse} from "./utils/response.util.ts";
 import {cleanupExpiredTrackedFlights, deleteExpiredRadars} from "./utils/cron.util.ts";
 import {env} from "./utils/env.ts";
+import {ThirdPartyQuotaExceededError} from "./errors/ThirdPartyQuotaExceededError.ts";
 
 export const db = new Database(env.DB_PATH, {create: true});
 
@@ -141,6 +142,13 @@ Bun.serve({
         '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
         '/api/user/api_requests': async (request) => getApiRequestsUsage(request), //TODO: add yaak request
         '/*': new Response("Not found", {status: 404}),
+    },
+    error(error) {
+        if (error instanceof ThirdPartyQuotaExceededError) {
+            return jsonResponse({error: error.message, service: error.service, quota_exceeded: true}, 429);
+        }
+        console.error('[server] Unhandled error:', error);
+        return jsonResponse({error: 'Internal server error'}, 500);
     },
     websocket: {
         data: {} as { id: string, token: string },

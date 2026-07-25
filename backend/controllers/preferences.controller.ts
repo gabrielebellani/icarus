@@ -86,6 +86,15 @@ export async function getThirdPartyAPIUsage(request: Request) {
 
 }
 
+export function setPreference(key: PreferenceKeyEnum, userId: number, value: any): void {
+    const pref = new Preference(userId, key, value);
+    db.prepare(`
+        INSERT INTO preferences (user_id, key, value)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value
+    `).run(userId, pref.key, pref.value);
+}
+
 export function getPreference(key: PreferenceKeyEnum, userId: number): Preference | null {
     const preference = db.query("SELECT * FROM preferences WHERE user_id = ? AND key = ?").get(userId, key)
     if (preference === null) {

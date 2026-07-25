@@ -7,6 +7,7 @@ import {RADAR_INACTIVITY_TIMEOUT_S, RADAR_REFRESH_INTERVAL_S} from "../utils/rad
 import type {ServerWebSocket} from "bun";
 import {RadarRepository} from "../repositories/radar.repository.ts";
 import {RadarDataService} from "../services/radarData.service.ts";
+import {ThirdPartyQuotaExceededError} from "../errors/ThirdPartyQuotaExceededError.ts";
 
 const startRadarSchema = z.object({
     coordinates: z.object({
@@ -147,13 +148,21 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
     const openSkyKey = getOpenSkyKey(userId);
 
     const computeRefresh = async () => {
-        return JSON.stringify({
-            aircraft: await RadarDataService.getFlightsInArea(
-                radarInstance,
-                userId,
-                openSkyKey
-            ),
-        })
+        try {
+            return JSON.stringify({
+                aircraft: await RadarDataService.getFlightsInArea(
+                    radarInstance,
+                    userId,
+                    openSkyKey
+                ),
+            })
+        } catch (error) {
+            if (error instanceof ThirdPartyQuotaExceededError) {
+                // Quota hit mid-stream: keep the socket alive, just skip this refresh.
+                return JSON.stringify({aircraft: []})
+            }
+            throw error
+        }
     }
 
     if (ws.readyState === WebSocket.OPEN) {

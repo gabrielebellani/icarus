@@ -4,8 +4,8 @@ import {trackApiRequest} from "../utils/apiRequestTracking.util.ts";
 export class ThirdPartyHttpService {
 
     protected host: string = ''
-    private readonly service: ThirdPartyServiceEnum
-    private readonly userId: number
+    protected readonly service: ThirdPartyServiceEnum
+    protected readonly userId: number
 
     constructor(service: ThirdPartyServiceEnum, userId: number) {
         this.service = service

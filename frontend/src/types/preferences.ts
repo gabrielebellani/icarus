@@ -1,5 +1,6 @@
 export type PreferenceKey =
   | 'flightaware_api_key'
+  | 'flightaware_allow_over_limit'
   | 'opensky_network_api_key'
 
 export type PreferenceType = 'string' | 'number' | 'boolean' | 'json'
