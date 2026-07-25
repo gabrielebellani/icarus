@@ -1,47 +1,81 @@
-# Icarus — Open-source Flight Tracking UI
+# The flight tracker for those who care what's over their heads.
 
-A modular, Vue 3 + TypeScript web interface for real-time flight tracking with live radar, airport timetables, and user preferences management.
+Web interface for real-time flight tracking, live radar and airport timetables.
+
+### Inspiration:
+
+This project is inspired by The Flight Wall (https://theflightwall.com/) and wants to be a self-hosted, cheaper and 100%
+software alternative.
+There's no need for specific hardware to run Icarus.
 
 ## Features
 
-- **Live Flight Tracking**: Real-time radar visualization with WebSocket updates
-- **Flight & Airport Search**: Quick lookup and tracking of flights and airports
-- **User Preferences**: Customizable dashboard variants (minimal, detailed, flight-focused)
-- **Account Management**: Password recovery, settings, API usage tracking
-- **Self-Hosted**: Run on your own infrastructure with Docker
-- **Responsive UI**: Built with Vue 3, Tailwind CSS, and shadcn-vue components
+### 📡 Radars
 
-## Architecture
+The Radar allow you to see which aircraft are currently in the sky above a given location and inside a given radius.
 
-```
-┌─────────────────────────────────┐
-│   Frontend (Caddy + SPA)        │
-│  • Vue 3 + TypeScript + Vite    │
-│  • Tailwind + shadcn-vue        │
-│  • Reverse-proxy to /api        │
-└──────────────┬──────────────────┘
-               │
-        (same-origin proxy)
-               │
-┌──────────────▼──────────────────┐
-│      Backend (Bun + SQLite)     │
-│  • REST API + WebSocket server  │
-│  • User authentication          │
-│  • Flight tracking logic        │
-│  • Redis for caching            │
-└──────────────┬──────────────────┘
-               │
-      ┌────────┴────────┐
-      │                 │
-   SQLite           Redis
-```
+### 🛬 Flight
 
-## Self-Hosting with Docker
+Track a flight from the moment it leaves to gate to the moment it arrives, see its speed and realtime altitude and
+progress.
+
+### ✈️ Airports
+
+See your favourite airports arrival and departures on a convenient timetable.
+
+### 📊 Usage
+
+Track your usage of third party services in the Preferences section.
+
+## Data sources (read carefully):
+
+This project is 100% hobbyist and not meant to be a large-scale production-ready application.
+Data are gathered from third party services that are free and open source or have a free tier.
+- FlightAware (https://flightaware.com/)
+- OpenSky (https://opensky.org/)
+- ADSB.lol (https://adsb.lol/)
+- adsbdb.com (https://adsbdb.com/)
+- JetPhotos and FlightRadar24 (https://www.jetphotos.com/ and https://www.flightradar24.com/)
+
+### FlightAware - API key required
+FlightAware is the most reliable source of information used by this project. 
+It requires an API key to access their data. **Each Icarus user account** must register a FlightAware account and get its own API key.
+
+FlightAware API are not free but currently (as of July 2026) it offers a $5 monthly credit. For a single user, this should be more than enough.
+For this reason Icarus uses FlightAware API as last resort or with a heavy rate limiter.
+In the Preferences you can set the API key and track the usage.
+
+### OpenSky - API key not required
+OpenSky is a free service that provides adsb data. Icarus mainly calls OpenSky to fetch nearby aircraft in the radar. 
+OpenSky, if used without an API key, has a tier of 400 requests per day, which is enough for a limited usage of the radar (roughly 3 hours with a refresh rate of 30seconds).
+However, you can register a free OpenSky account and get an API key (which you can set in the Preferences section) and extend the tier to 4000 requests per day (more than 30 hours of refreshes).
+
+### ADSB.lol - API key not required
+Adsb.lol is an amazing open-source project, (go check it out!) and it's used as the main source for the radar flights routes information. 
+It doesn't require an API key, and it's free to use.
+
+### adsbdb.com - API key not required
+adsbdb.com is another amazing open-source project, (go check it out as well!) and it's used to retrieve aircraft specific information (such as registration, manufacturer, etc.). 
+It doesn't require an API key, and it's free to use.
+
+### JetPhotos and FlightRadar24 - API key not required
+These two services are used to retrieve aircraft images. They do not offer a public API hence I needed to find an easy way to access their publicly available data, I found jetapi.dev (https://www.jetapi.dev/), 
+however it didn't offer an easy way to integrate it, so I Dockerized it (https://github.com/gabrielebellani/jetapi_scraper_docker).
+It doesn't require an API key, and it's free to use.
+
+### Note on third party services usage and data accuracy
+Icarus infers itself a quite strict rate limiter on third party calls, the reason is to prevent being banned by the third party services and to ensure that their servers are not overloaded.
+
+Data accuracy is not guaranteed, this services are not always 100% accurate, and Icarus cannot be held responsible for any data inaccuracies. 
+Sometimes, if you compare displayed information with FlightRadar24 or other (paid) similar services, you may notice discrepancies.
+
+_Note:_ if you want to add other data sources, please open an issue or a pull request.
+
+## Installation (Docker)
 
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- Basic knowledge of environment variables and Docker
 
 ### Quick Start
 
@@ -57,8 +91,8 @@ A modular, Vue 3 + TypeScript web interface for real-time flight tracking with l
    ```
 
 3. **Edit `.env` with your configuration**:
-   - Set secure `SUPERUSER_PASSWORD` and `JWT_SECRET`
-   - Update `FRONTEND_URL` if accessing from a different hostname/domain
+    - Set secure `SUPERUSER_PASSWORD` and `JWT_SECRET`
+    - Update `FRONTEND_URL` if accessing from a different hostname/domain
 
 4. **Start the services**:
    ```bash
@@ -66,25 +100,28 @@ A modular, Vue 3 + TypeScript web interface for real-time flight tracking with l
    ```
 
 5. **Access the application**:
-   - Open `http://localhost` (or your configured `FRONTEND_PORT`)
-   - Log in with username `admin` and the password from `.env`
+    - Open `http://localhost:8920` (or your configured `FRONTEND_PORT`)
+    - Log in with username `admin` and the password from `.env`
 
 ### Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `SUPERUSER_USERNAME` | Yes | `admin` | Initial admin username |
-| `SUPERUSER_PASSWORD` | Yes | - | Initial admin password (change this!) |
-| `JWT_SECRET` | Yes | - | Secret for JWT token signing (min 32 chars) |
-| `FRONTEND_URL` | No | `http://localhost` | Public URL for password recovery messages |
-| `FRONTEND_PORT` | No | `8920` | Port to expose the frontend on the host |
+| Variable               | Required | Default                      | Description                                 |
+|------------------------|----------|------------------------------|---------------------------------------------|
+| `SUPERUSER_USERNAME`   | Yes      | `admin`                      | Initial admin username                      |
+| `SUPERUSER_PASSWORD`   | Yes      | -                            | Initial admin password (change this!)       |
+| `JWT_SECRET`           | Yes      | -                            | Secret for JWT token signing (min 32 chars) |
+| `FRONTEND_URL`         | No       | `http://localhost:8920`      | Public URL for password recovery messages   |
+| `FRONTEND_PORT`        | No       | `8920`                       | Port to expose the frontend on the host     |
+| `DB_PATH`              | No       | `/app/data/icarus-db.sqlite` | Path to the SQLite database                 |
+| `DISABLE_REGISTRATION` | No       | `true`                       | Disable user registration                   |
 
 > Note: password recovery currently logs the reset token to the backend
 > container logs — email delivery (SMTP) is not implemented yet.
 
-### Docker Compose in Existing Setup
+## Installation (integrate in existing Docker Compose setup)
 
-If you already run other services with Docker Compose, you can integrate Icarus by adding these services to your existing `docker-compose.yml`:
+If you already run other services with Docker Compose, you can integrate Icarus by adding these services to your
+existing `docker-compose.yml`:
 
 ```yaml
 services:
@@ -105,13 +142,11 @@ services:
       SUPERUSER_USERNAME: admin
       SUPERUSER_PASSWORD: ${ICARUS_PASSWORD}
       JWT_SECRET: ${ICARUS_JWT_SECRET}
-      REDIS_URL: redis://redis:6379
       JETAPI_URL: http://jetapi:8922
       DB_PATH: /app/data/icarus-db.sqlite
     volumes:
       - icarus-db:/app/data
     depends_on:
-      - redis
       - jetapi
     networks:
       - your-network
@@ -125,22 +160,11 @@ networks:
 ```
 
 Then update your `.env`:
+
 ```bash
 ICARUS_PASSWORD=your-secure-password-here
 ICARUS_JWT_SECRET=your-jwt-secret-here-min-32-chars
 ```
-
-### Upgrading
-
-To upgrade to a new version:
-
-```bash
-docker compose down
-docker compose pull
-docker compose up -d
-```
-
-Data persists in named volumes (`backend-data`, `redis-data`), so you won't lose any information.
 
 ## Development
 
@@ -149,20 +173,45 @@ Data persists in named volumes (`backend-data`, `redis-data`), so you won't lose
 For development, you'll need Node.js/Bun and can use the local dev environment without Docker:
 
 **Frontend**:
+
 ```bash
 cd frontend
 bun install
 bun run dev
 ```
+
 Runs on `http://localhost:5173` with Vite dev proxy.
 
 **Backend**:
+
 ```bash
 cd backend
 bun install
 bun run index.ts
 ```
-Runs on `http://localhost:8921` with local SQLite and Redis.
+
+Runs on `http://localhost:8921` with local SQLite.
+
+## Architecture breakdown
+
+```
+┌─────────────────────────────────┐
+│   Frontend (Caddy + SPA)        │
+│  • Vue 3 + TypeScript + Vite    │
+│  • Tailwind + shadcn-vue        │
+└──────────────┬──────────────────┘
+               │
+               │
+┌──────────────▼──────────────────┐
+│      Backend (Bun + SQLite)     │
+│  • REST API + WebSocket server  │
+│  • User authentication          │
+│  • Flight tracking logic        │
+└──────────────┬──────────────────┘
+               │
+            SQLite
+
+```
 
 ### Project Structure
 
@@ -201,39 +250,25 @@ icarus/
 ## Key Technologies
 
 - **Frontend**: Vue 3, TypeScript, Tailwind CSS, shadcn-vue, Leaflet maps, Vite
-- **Backend**: Bun (TypeScript runtime), SQLite, Redis
+- **Backend**: Bun (TypeScript runtime), SQLite
 - **Deployment**: Docker, Docker Compose, Caddy
-- **Authentication**: JWT tokens, password recovery (reset token logged server-side)
+- **Authentication**: JWT tokens, password recovery
 
 ## Security Considerations
 
 - **Always** change `SUPERUSER_PASSWORD` and `JWT_SECRET` in production
-- Use strong, random passwords (at least 16 characters)
-- Set `FRONTEND_URL` to your actual domain for password recovery links
+- Set `FRONTEND_URL` to your actual domain for working password recovery links
 - Consider using a reverse proxy for HTTPS/TLS
 - Keep Docker images updated regularly
-- Monitor logs for suspicious activity
 
-## Troubleshooting
-
-### Backend won't start: "Missing required environment variable"
-- Check all required variables are set in `.env`
-- Ensure `JWT_SECRET` is at least 32 characters
-
-### Frontend can't connect to API
-- Verify `VITE_API_BASE_URL` is set to `/api` in frontend build
-- Check backend healthcheck: `docker compose logs backend`
-- Ensure backend service is healthy: `docker compose ps`
-
-### WebSocket connection fails
-- Check that proxy is configured with `ws: true` (handled automatically)
-- Verify the Caddyfile is loaded correctly (Caddy handles WebSocket upgrades automatically)
-- Check Docker network: `docker network inspect icarus`
-
-### Database file missing or corrupted
-- SQLite database is stored in the `backend-data` volume
-- To reset: `docker volume rm icarus_backend-data && docker compose up -d`
-- To backup: `docker run --rm -v icarus_backend-data:/data -v $(pwd):/backup alpine cp /data/icarus-db.sqlite /backup/`
+## Roadmap/improvements ideas
+- [ ] add support for ADS-B antennas
+- [ ] admin can create user's accounts and send them an invitation
+- [ ] shared admin third parties API keys
+- [ ] push/webhook notifications for tracked flight events (takeoff, landing, delays)
+- [ ] personal flight history/logbook with stats on past tracked flights
+- [ ] METAR/TAF weather overlay on airport timetables
+- [ ] shared radar/route cache across users to reduce OpenSky/FlightAware API usage
 
 ## License
 
@@ -243,12 +278,3 @@ Licensed under the [AGPL-3.0 License](LICENSE).
 
 Contributions welcome! Please open issues and pull requests on GitHub.
 
-## Support
-
-- **Issues & Bug Reports**: GitHub Issues
-- **Questions**: GitHub Discussions
-- **Documentation**: See `/docs` folder for detailed architecture and guides
-
----
-
-**Made with ❤️ for flight tracking enthusiasts**
