@@ -23,6 +23,7 @@ interface TrackingMeta {
   phase: FlightPhase
   dataSource: FlightDataSource
   degradedMode: boolean
+  referenceDate: string
 }
 const trackingMeta = ref<TrackingMeta | null>(null)
 
@@ -53,6 +54,7 @@ function updateFromRecord(record: TrackingRecord) {
     phase: record.phase,
     dataSource: record.data_source,
     degradedMode: record.degraded_mode,
+    referenceDate: record.reference_date,
   }
 }
 
@@ -177,6 +179,7 @@ onUnmounted(() => {
             :flight="trackedFlight"
             :data-source="trackingMeta?.dataSource ?? null"
             :degraded-mode="trackingMeta?.degradedMode ?? false"
+            :reference-date="trackingMeta?.referenceDate"
             @stop-tracking="onStopTracking"
           />
         </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { RadarAircraft } from '@/types/radar'
+import ImageModal from '@/components/ImageModal.vue'
 
 const props = defineProps<{
   aircraft: RadarAircraft
@@ -160,13 +161,14 @@ const showPhoto = computed(() => Boolean(aircraftInfo.value?.cover_url) && !phot
         <span class="radar-aircraft-card__bottom-text" style="font-variant-numeric: tabular-nums">
           {{ registration }}
         </span>
-        <img
-          v-if="showPhoto"
-          :src="aircraftInfo?.cover_url ?? ''"
-          alt=""
-          class="radar-aircraft-card__photo"
-          @error="photoError = true"
-        />
+        <ImageModal v-if="showPhoto" :src="aircraftInfo?.cover_url ?? ''" :alt="aircraftType">
+          <img
+            :src="aircraftInfo?.cover_url ?? ''"
+            alt=""
+            class="radar-aircraft-card__photo"
+            @error="photoError = true"
+          />
+        </ImageModal>
       </div>
     </div>
   </div>

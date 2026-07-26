@@ -9,6 +9,7 @@ const props = defineProps<{
   flight: TrackedFlightPayload
   dataSource?: FlightDataSource
   degradedMode?: boolean
+  referenceDate?: string
 }>()
 
 const emit = defineEmits<{
@@ -147,6 +148,7 @@ function doStop() {
         v-else
         :flight="flight"
         :show-icao="showIcao"
+        :reference-date="referenceDate"
         :class="{ 'flight-tracking__detailed--fullscreen': isFullscreen }"
         @toggle-ident="showIcao = !showIcao"
       />
@@ -190,8 +192,7 @@ function doStop() {
     z-index: 9999;
     max-width: none;
     background: var(--background);
-    // Use padding for the 10% margin zone; no overflow-y so the widget can fill vertically
-    padding: 10% 10%;
+    padding: 2% 10%;
 
     .flight-tracking__toolbar {
       width: 100%;

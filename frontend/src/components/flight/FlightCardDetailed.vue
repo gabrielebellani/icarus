@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { TrackedFlightPayload } from '@/types/flight'
+import ImageModal from '@/components/ImageModal.vue'
 
 const props = defineProps<{
   flight: TrackedFlightPayload
   showIcao: boolean
+  referenceDate?: string
 }>()
 
 const emit = defineEmits<{
@@ -145,16 +147,6 @@ const showAircraftImage = computed(() => Boolean(props.flight.aircraft.image_url
       </div>
     </div>
 
-    <!-- Aircraft image -->
-    <div v-if="showAircraftImage" class="flight-detailed__aircraft-image-wrapper">
-      <img
-        :src="flight.aircraft.image_url!"
-        :alt="`${flight.aircraft.type} (${flight.aircraft.registration})`"
-        class="flight-detailed__aircraft-image"
-        @error="photoError = true"
-      />
-    </div>
-
     <!-- Timing grid -->
     <div class="flight-detailed__timing">
       <!-- Departure -->
@@ -262,6 +254,23 @@ const showAircraftImage = computed(() => Boolean(props.flight.aircraft.image_url
       <div class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Registration</span>
         <span class="flight-detailed__detail-value">{{ flight.aircraft.registration || '—' }}</span>
+      </div>
+      <div class="flight-detailed__detail-item" v-if="showAircraftImage">
+        <span class="flight-detailed__detail-label">Image</span>
+        <span class="flight-detailed__detail-value">
+          <ImageModal :src="flight.aircraft.image_url!" :alt="`${flight.aircraft.type} (${flight.aircraft.registration})`">
+            <img
+                :src="flight.aircraft.image_url!"
+                :alt="`${flight.aircraft.type} (${flight.aircraft.registration})`"
+                class="flight-detailed__aircraft-image"
+                @error="photoError = true"
+            />
+          </ImageModal>
+        </span>
+      </div>
+      <div class="flight-detailed__detail-item" v-if="referenceDate">
+        <span class="flight-detailed__detail-label">Reference date</span>
+        <span class="flight-detailed__detail-value">{{ referenceDate }}</span>
       </div>
       <div class="flight-detailed__detail-item">
         <span class="flight-detailed__detail-label">Operator</span>
@@ -608,19 +617,9 @@ const showAircraftImage = computed(() => Boolean(props.flight.aircraft.image_url
 }
 
 // ── Aircraft image ────────────────────────────────────────────────────────────
-.flight-detailed__aircraft-image-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1.5rem 1.25rem;
-  border-top: 1px solid var(--w-divider);
-  background: var(--w-bg);
-  min-height: 160px;
-}
-
 .flight-detailed__aircraft-image {
   max-width: 100%;
-  max-height: 200px;
+  max-height: 40px;
   height: auto;
   object-fit: contain;
   border-radius: 0.5rem;
