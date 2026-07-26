@@ -8,6 +8,16 @@ This project is inspired by The Flight Wall (https://theflightwall.com/) and wan
 software alternative.
 There's no need for specific hardware to run Icarus.
 
+## Screenshots
+### Radar live updates
+![Radar section screenshots with fullscreen and non-fullscreen](./docs/images/readme/Radar.png?raw=true "Radar section")
+
+### Flight tracking
+![Flight tracking section screenshots with fullscreen and non-fullscreen](./docs/images/readme/Flight.png?raw=true "Flight tracking section")
+
+### Airports timetable
+![Airports timetable section screenshots with fullscreen and non-fullscreen](./docs/images/readme/Airports.png?raw=true "Airports timetable section")
+
 ## Features
 
 ### 📡 Radars
