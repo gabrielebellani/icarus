@@ -8,6 +8,7 @@ import { useLogout } from '@/composables/useLogout'
 import { useAppChrome } from '@/composables/useAppChrome'
 import type { RadarTracking } from '@/types/radar'
 import RadarAircraftCard from '@/components/radar/RadarAircraftCard.vue'
+import RadarEditDialog from '@/components/radar/RadarEditDialog.vue'
 import { Button } from '@/components/ui/button'
 
 const route = useRoute()
@@ -32,10 +33,34 @@ onMounted(async () => {
 })
 
 // ── WebSocket + carousel ───────────────────────────────────────────────────────
-const { connectionState, aircraft, lastMessageAt, error: wsError, retry: retryConnection } = useRadarSocket({
+const {
+  connectionState,
+  aircraft,
+  lastMessageAt,
+  error: wsError,
+  retry: retryConnection,
+  connect: connectSocket,
+  disconnect: disconnectSocket,
+} = useRadarSocket({
   radarId,
   onAuthFailure: logout,
 })
+
+// ── Edit (only while the connection is paused) ─────────────────────────────────
+const showEditDialog = ref(false)
+
+function openEdit() {
+  disconnectSocket(false)
+  showEditDialog.value = true
+}
+
+watch(showEditDialog, (isOpen) => {
+  if (!isOpen) connectSocket()
+})
+
+function onUpdated(updated: RadarTracking) {
+  radar.value = updated
+}
 
 const { currentAircraft, position } = useAircraftCarousel({
   aircraft,
@@ -157,6 +182,20 @@ const connectionStatusTone = computed(() => {
             </Button>
           </div>
 
+          <button
+            v-show="!isFullscreen"
+            class="radar-tracking-view__icon-btn"
+            title="Edit radar settings"
+            aria-label="Edit radar settings"
+            :disabled="!radar"
+            @click="openEdit"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              <path d="m15 5 4 4" />
+            </svg>
+          </button>
+
           <button class="radar-tracking-view__icon-btn" :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'" :aria-label="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'" @click="toggleFullscreen">
             <!-- Enter fullscreen icon -->
             <svg v-if="!isFullscreen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -221,6 +260,8 @@ const connectionStatusTone = computed(() => {
       </main>
     </div>
   </Teleport>
+
+  <RadarEditDialog v-if="radar" v-model:open="showEditDialog" :radar="radar" @updated="onUpdated" />
 </template>
 
 <style scoped lang="scss">
@@ -363,10 +404,15 @@ const connectionStatusTone = computed(() => {
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--muted);
       color: var(--foreground);
       border-color: var(--accent);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 

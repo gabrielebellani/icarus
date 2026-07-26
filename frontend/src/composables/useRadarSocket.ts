@@ -130,9 +130,13 @@ export function useRadarSocket({ radarId }: UseRadarSocketOptions) {
     connect()
   }
 
-  function disconnect() {
+  /**
+   * Close the socket. Pass `permanent: false` to allow a later `connect()` call to
+   * reopen it (used to pause the connection, e.g. while editing radar settings).
+   */
+  function disconnect(permanent = true) {
     console.log('[useRadarSocket] Disconnecting...')
-    isActive = false
+    if (permanent) isActive = false
     connectionState.value = 'closed'
     if (reconnectTimeout) {
       clearTimeout(reconnectTimeout)
@@ -172,6 +176,7 @@ export function useRadarSocket({ radarId }: UseRadarSocketOptions) {
     isReconnecting,
     hasError,
     retry,
+    connect,
     disconnect,
   }
 }

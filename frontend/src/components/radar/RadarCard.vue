@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { deleteRadarTracking } from '@/api/radar'
 import type { RadarTracking } from '@/types/radar'
 import { Button } from '@/components/ui/button'
+import RadarEditDialog from './RadarEditDialog.vue'
 
 const props = defineProps<{
   radar: RadarTracking
@@ -11,7 +12,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   removed: [id: string]
+  updated: [radar: RadarTracking]
 }>()
+
+// ── Edit ──────────────────────────────────────────────────────────────────────
+const showEditDialog = ref(false)
+
+function onUpdated(radar: RadarTracking) {
+  emit('updated', radar)
+}
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 const status = computed(() => {
@@ -38,7 +47,7 @@ const expirationDisplay = computed(() => {
 
 const inactivityDisplay = computed(() => {
   if (props.radar.inactivity_timeout === null) return 'Disabled'
-  return `${props.radar.inactivity_timeout}m`
+  return `${Math.ceil(props.radar.inactivity_timeout)/60}m`
 })
 
 // ── Delete ────────────────────────────────────────────────────────────────────
@@ -91,13 +100,34 @@ async function doDelete() {
       <!-- Middle: details grid -->
       <div> </div>
 
-      <!-- Right: delete button -->
+      <!-- Right: edit + delete buttons -->
       <div class="radar-card__right">
+        <button
+          class="radar-card__icon-btn"
+          title="Edit radar settings"
+          aria-label="Edit radar settings"
+          @click.stop.prevent="showEditDialog = true"
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            <path d="m15 5 4 4" />
+          </svg>
+        </button>
         <button
           class="radar-card__icon-btn radar-card__icon-btn--danger"
           title="Remove radar"
           aria-label="Remove radar from tracking"
-          @click.stop="requestDelete"
+          @click.stop.prevent="requestDelete"
         >
           <svg
             width="13"
@@ -118,7 +148,9 @@ async function doDelete() {
         </button>
       </div>
     </div>
-    
+
+    <RadarEditDialog v-model:open="showEditDialog" :radar="radar" @updated="onUpdated" />
+
     <div class="radar-card__details">
         <div class="radar-card__detail-item">
           <span class="radar-card__detail-label">Radius</span>
@@ -146,9 +178,9 @@ async function doDelete() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-confirm-title"
-        @click.self="cancelDelete"
+        @click.self.stop.prevent="cancelDelete"
       >
-        <div class="radar-card__confirm-box">
+        <div class="radar-card__confirm-box" @click.stop.prevent>
           <p id="delete-confirm-title" class="radar-card__confirm-title">Delete radar?</p>
           <p class="radar-card__confirm-body">
             This will stop tracking aircraft in this zone. The action cannot be undone.
@@ -196,7 +228,7 @@ $accent-red: oklch(0.72 0.18 25);
 
   &__body {
     display: grid;
-    grid-template-columns: 1fr 1fr 2.25rem;
+    grid-template-columns: 1fr 1fr auto;
     gap: 1rem;
     align-items: start;
   }
@@ -284,6 +316,7 @@ $accent-red: oklch(0.72 0.18 25);
     display: flex;
     align-items: flex-start;
     justify-content: flex-end;
+    gap: 0.375rem;
   }
 
   &__icon-btn {

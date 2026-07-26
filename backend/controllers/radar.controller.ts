@@ -97,7 +97,13 @@ export async function terminateTracking(request: Request, radarId: string) {
     return new Response()
 }
 
-export async function resumeRadar(request: Request, radarId: string) {
+const updateRadarSchema = z.object({
+    name: z.string().min(1).max(255),
+    expiration: z.iso.datetime().nullable(),
+    inactivity_timeout: z.enum(["15", "30", "60", "120", "360", "720"]).nullable(),
+})
+
+export async function updateRadar(request: Request, radarId: string) {
     const auth = await authenticate(request)
     if (isAuthError(auth)) return auth;
 
@@ -108,9 +114,19 @@ export async function resumeRadar(request: Request, radarId: string) {
         return jsonResponse({error: 'Radar not found'}, 404);
     }
 
-    //TODO: implementare
+    const body = await request.json();
+    const parsed = updateRadarSchema.safeParse(body);
+    if (!parsed.success) {
+        return jsonResponse({errors: parsed.error.issues}, 422);
+    }
 
-    return new Response()
+    RadarRepository.updateRadar(radarId, userId, {
+        name: parsed.data.name,
+        expiration: parsed.data.expiration ? new Date(parsed.data.expiration).getTime() : null,
+        inactivity_timeout: parsed.data.inactivity_timeout ? Number(parsed.data.inactivity_timeout) * 60 : null,
+    });
+
+    return jsonResponse(RadarRepository.getRadarByIdAndUser(radarId, userId));
 }
 
 /**

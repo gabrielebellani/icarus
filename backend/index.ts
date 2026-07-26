@@ -23,8 +23,8 @@ import {changePassword, deleteAccount, getApiRequestsUsage} from "./controllers/
 import {
     getSingleTrackingRadar,
     getTrackingRadars,
+    updateRadar,
     refreshRadar,
-    resumeRadar,
     startTracking as startTrackingRadar,
     terminateTracking as terminateTrackingRadar
 } from "./controllers/radar.controller.ts";
@@ -108,7 +108,7 @@ Bun.serve({
         '/api/radar/tracking/:id': {
             "GET": async (request) => await getSingleTrackingRadar(request, String(request.params.id)),
             "DELETE": async (request) => await terminateTrackingRadar(request, String(request.params.id)),
-            "PUT": async (request) => await resumeRadar(request, String(request.params.id)),
+            "PUT": async (request) => await updateRadar(request, String(request.params.id)),
         },
         '/api/radar/open/:id': async (request, server) => {
             let token: string | null = null;

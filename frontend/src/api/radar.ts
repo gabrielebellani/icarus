@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { RadarTracking, RadarCreatePayload } from '@/types/radar'
+import type { RadarTracking, RadarCreatePayload, RadarUpdatePayload } from '@/types/radar'
 
 /**
  * Fetch all currently active radar trackings.
@@ -26,4 +26,15 @@ export function createRadarTracking(payload: RadarCreatePayload): Promise<RadarT
  */
 export function deleteRadarTracking(id: string): Promise<void> {
   return request<void>(`/radar/tracking/${id}`, { method: 'DELETE' })
+}
+
+/**
+ * Update a radar tracking's name, expiration and inactivity timeout.
+ * PUT /api/radar/tracking/:id
+ */
+export function updateRadarTracking(id: string, payload: RadarUpdatePayload): Promise<RadarTracking> {
+  return request<RadarTracking>(`/radar/tracking/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
 }

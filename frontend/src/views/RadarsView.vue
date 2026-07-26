@@ -28,6 +28,11 @@ function onCreated(record: RadarTracking) {
 function onRemoved(id: string) {
   radars.value = radars.value.filter((r) => r.id !== id)
 }
+
+function onUpdated(radar: RadarTracking) {
+  const index = radars.value.findIndex((r) => r.id === radar.id)
+  if (index !== -1) radars.value[index] = radar
+}
 </script>
 
 <template>
@@ -78,7 +83,7 @@ function onRemoved(id: string) {
         <!-- Radar list -->
         <div v-if="radars.length > 0" class="radars__list" role="list" aria-label="Active radars">
           <div v-for="radar in radars" :key="radar.id" role="listitem">
-            <RadarCard :radar="radar" @removed="onRemoved" />
+            <RadarCard :radar="radar" @removed="onRemoved" @updated="onUpdated" />
           </div>
         </div>
 

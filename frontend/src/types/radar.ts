@@ -70,6 +70,23 @@ export interface RadarCreatePayload {
 }
 
 /**
+ * Payload for updating an existing radar tracking's settings.
+ * Only allowed while the radar's WebSocket connection is closed.
+ */
+export interface RadarUpdatePayload {
+  name: string
+  /**
+   * ISO 8601 date, or null for no expiration.
+   */
+  expiration: string | null
+  /**
+   * Minutes until inactivity timeout, or null to disable.
+   * Values: 15, 30, 60, 120, 360, 720.
+   */
+  inactivity_timeout: string | null
+}
+
+/**
  * ADS-B state from a tracking radar.
  * Mirrors the OpenSky Network ADS-B state object structure.
  */

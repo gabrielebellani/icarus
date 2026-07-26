@@ -39,6 +39,14 @@ export class RadarRepository {
         db.prepare('DELETE FROM radars WHERE id = ? AND user_id = ?').run(radarId, userId);
     }
 
+    static updateRadar(radarId: string, userId: number, data: { name: string, expiration: number | null, inactivity_timeout: number | null }): void {
+        db.prepare(`
+            UPDATE radars
+            SET name = ?, expiration = ?, inactivity_timeout = ?
+            WHERE id = ? AND user_id = ?
+        `).run(data.name, data.expiration, data.inactivity_timeout, radarId, userId);
+    }
+
     static getPersistedRoutes(callsigns: string[]): RadarCommercialFlight[] {
         if (callsigns.length === 0) {
             return [];
