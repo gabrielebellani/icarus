@@ -71,7 +71,7 @@ export class OpenSkyService extends ThirdPartyHttpService{
                 : undefined
         )
 
-        if (!apiResponse || !apiResponse.content.states) {
+        if (!apiResponse || !apiResponse.content?.states) {
             return [];
         }
 
@@ -93,7 +93,7 @@ export class OpenSkyService extends ThirdPartyHttpService{
                     : undefined
             )
 
-            if (!apiResponse || !apiResponse.content.states || apiResponse.content.states.length === 0) {
+            if (!apiResponse || !apiResponse.content?.states || apiResponse.content.states.length === 0) {
                 return null;
             }
 

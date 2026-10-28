@@ -11,7 +11,7 @@
     "typescript": "^5"
   },
   "scripts": {
-    "migrate": "bun migrations/migrations.ts"
+    "test": "bun test"
   },
   "dependencies": {
     "date-fns": "^4.3.0",

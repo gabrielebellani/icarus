@@ -1,5 +1,5 @@
 import {authenticate, isAuthError} from "../middleware/auth.ts";
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {Preference} from "../classes/Preference.ts";
 import {jsonResponse} from "../utils/response.util.ts";
 import {PreferenceKeyEnum, PreferenceUserCanSet} from "../enums/PreferenceKeyEnum.ts";

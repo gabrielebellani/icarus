@@ -44,7 +44,7 @@ export class RadarCommercialFlight {
             callsign,
             result.origin.code_icao ?? result.origin.code_iata,
             result.destination.code_icao ?? result.destination.code_iata,
-            result.airline.operator_icao ?? result.airline.operator_iata,
+            result.operator_icao ?? result.operator_iata,
         )
     }
 

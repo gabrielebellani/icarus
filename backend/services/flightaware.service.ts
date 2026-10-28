@@ -24,6 +24,13 @@ export function isFlightawareBudgetBlocked(userId: number): boolean {
     return PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, userId)?.value === currentMonthKey();
 }
 
+function budgetExceededError(): ThirdPartyQuotaExceededError {
+    return new ThirdPartyQuotaExceededError(
+        ThirdPartyServiceEnum.FLIGHTAWARE,
+        `FlightAware's $${MONTHLY_FREE_CREDIT_USD} monthly free credit has been reached. Enable "Allow exceeding FlightAware monthly limit" in Preferences to keep making calls.`
+    );
+}
+
 export class FlightawareService extends ThirdPartyHttpService {
     private readonly key: string
     override host = 'https://aeroapi.flightaware.com/aeroapi/'
@@ -47,10 +54,7 @@ export class FlightawareService extends ThirdPartyHttpService {
 
         const currentMonth = currentMonthKey();
         if (PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId)?.value === currentMonth) {
-            throw new ThirdPartyQuotaExceededError(
-                ThirdPartyServiceEnum.FLIGHTAWARE,
-                `FlightAware's $${MONTHLY_FREE_CREDIT_USD} monthly free credit has been reached. Enable "Allow exceeding FlightAware monthly limit" in Preferences to keep making calls.`
-            );
+            throw budgetExceededError();
         }
 
         const monthStart = formatISO(startOfMonth(new Date()), {representation: 'date'});
@@ -75,10 +79,7 @@ export class FlightawareService extends ThirdPartyHttpService {
         const usage: any = await this.fetchUsage();
         if (usage.total_cost >= BLOCK_THRESHOLD_USD) {
             PreferencesRepository.setPreference(PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH, this.userId, currentMonth);
-            throw new ThirdPartyQuotaExceededError(
-                ThirdPartyServiceEnum.FLIGHTAWARE,
-                `FlightAware's $${MONTHLY_FREE_CREDIT_USD} monthly free credit has been reached. Enable "Allow exceeding FlightAware monthly limit" in Preferences to keep making calls.`
-            );
+            throw budgetExceededError();
         }
     }
 

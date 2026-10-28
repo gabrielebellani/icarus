@@ -1,9 +1,9 @@
 import {AdsbdbService} from './adsbdb.service.ts';
 import {OpenSkyService} from './opensky.service.ts';
-import {AdsbLolService} from './adsbLol.service.ts';
+import {AdsbLolService, type AdsbLolState} from './adsbLol.service.ts';
 import {JetapiScraperService} from './jetapiScraper.service.ts';
 import {RadarRepository} from '../repositories/radar.repository.ts';
-import {db} from '../index.ts';
+import {db} from '../db.ts';
 import {getFlightawareKey, getOpenSkyKey} from '../utils/third_party.util.ts';
 import {FlightawareService} from './flightaware.service.ts';
 import {normalizeFlightPayload, hasLanded} from '../utils/flight.util.ts';
@@ -11,8 +11,6 @@ import {ThirdPartyQuotaExceededError} from '../errors/ThirdPartyQuotaExceededErr
 
 type FlightPhase = 'ground' | 'airborne' | 'completed';
 type DataSource = 'flightaware' | 'adsb.lol' | 'opensky' | null;
-
-type AdsbStateValue = { on_ground: boolean | null; velocity: number | null; altitude: number | null };
 
 // Normal cheap ADS-B polling cadence. Stays constant during final approach too —
 // only the (expensive) FlightAware cadence changes there.
@@ -100,7 +98,7 @@ export class FlightTrackingRefreshService {
         icao24: string,
         userId: number,
         registration?: string | null
-    ): Promise<{ state: AdsbStateValue; source: 'adsb.lol' | 'opensky' } | null> {
+    ): Promise<{ state: AdsbLolState; source: 'adsb.lol' | 'opensky' } | null> {
         const adsbLolService = new AdsbLolService(userId);
 
         // Try adsb.lol by registration first (most reliable)
@@ -139,22 +137,11 @@ export class FlightTrackingRefreshService {
      * Double-check if aircraft is airborne.
      * Signal: on_ground === false AND velocity > 35 m/s (≈68 kt) AND altitude > 100 m
      */
-    static isAirborne(state: AdsbStateValue): boolean {
+    static isAirborne(state: AdsbLolState): boolean {
         if (state.on_ground === true) return false;
         const velocity = state.velocity ?? 0;
         const altitude = state.altitude ?? 0;
         return velocity > 35 && altitude > 100;
-    }
-
-    /**
-     * Double-check if aircraft is landed.
-     * Signal: on_ground === true OR (velocity < 25 m/s AND altitude < 50 m)
-     */
-    static isLanded(state: AdsbStateValue): boolean {
-        if (state.on_ground === true) return true;
-        const velocity = state.velocity ?? 0;
-        const altitude = state.altitude ?? 9999; // Conservative default: assume not landed
-        return velocity < 25 && altitude < 50;
     }
 
     /**
@@ -331,7 +318,7 @@ export class FlightTrackingRefreshService {
 
         if (needsCheck || needsFinalApproachCheck) {
             last_adsb_at = now;
-            let adsbStateRecord: (AdsbStateValue & { updated_at: number }) | null = null;
+            let adsbStateRecord: (AdsbLolState & { updated_at: number }) | null = null;
 
             // Always attempt cheap ADS-B first — including during final approach and when
             // recovering from degraded mode, so a source coming back online is picked up.

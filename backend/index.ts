@@ -1,4 +1,3 @@
-import {Database} from 'bun:sqlite';
 import runMigrations from './migrations/migrations.ts';
 import {bootstrapSuperuser, getApplicationPublicConfig} from './controllers/application.controller.ts';
 import {
@@ -31,14 +30,10 @@ import {
 import {jsonResponse} from "./utils/response.util.ts";
 import {cleanupExpiredTrackedFlights, deleteExpiredRadars} from "./utils/cron.util.ts";
 import {env} from "./utils/env.ts";
+import {db} from "./db.ts";
 import {ThirdPartyQuotaExceededError} from "./errors/ThirdPartyQuotaExceededError.ts";
 
-export const db = new Database(env.DB_PATH, {create: true});
-
-// Execute migrations
 await runMigrations();
-
-// Initialize superuser from env
 await bootstrapSuperuser();
 
 Bun.cron("0 1 * * *", () => {
@@ -100,7 +95,7 @@ Bun.serve({
         '/api/airport/tracking/:id': {
             "DELETE": async (request) => await terminateTrackingAirport(request, Number(request.params.id)),
         },
-        '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)), //TODO: add yaak request
+        '/api/airport/tracking/:id/timetable': async (request) => await getAirportTimetable(request, Number(request.params.id)),
         '/api/radar/tracking': {
             "POST": async (request) => await startTrackingRadar(request),
             "GET": async (request) => await getTrackingRadars(request),
@@ -113,13 +108,12 @@ Bun.serve({
         '/api/radar/open/:id': async (request, server) => {
             let token: string | null = null;
 
-            // Prova prima dall'header Authorization (REST client)
+            // REST clients send the token as a header, browsers can't on a WebSocket upgrade
             const authHeader = request.headers.get('Authorization');
             if (authHeader?.startsWith('Bearer ')) {
                 token = authHeader.slice(7);
             }
 
-            // Se non c'è, prova dal query parameter (WebSocket browser/client, Yaak)
             if (!token) {
                 const url = new URL(request.url);
                 token = url.searchParams.get('token');
@@ -135,12 +129,12 @@ Bun.serve({
 
             return new Response("Upgrade failed", {status: 500});
         },
-        '/api/user/password': async (request) => await changePassword(request), //TODO: add yaak request
+        '/api/user/password': async (request) => await changePassword(request),
         '/api/user': {
-            "DELETE": async (request) => await deleteAccount(request), //TODO: add yaak request
+            "DELETE": async (request) => await deleteAccount(request),
         },
-        '/api/user/usage': async (request) => getThirdPartyAPIUsage(request), //TODO: add yaak request
-        '/api/user/api_requests': async (request) => getApiRequestsUsage(request), //TODO: add yaak request
+        '/api/user/usage': async (request) => getThirdPartyAPIUsage(request),
+        '/api/user/api_requests': async (request) => getApiRequestsUsage(request),
         '/*': new Response("Not found", {status: 404}),
     },
     error(error) {
@@ -155,13 +149,12 @@ Bun.serve({
         async open(ws) {
             await refreshRadar(ws.data.id, ws)
         },
-        message(ws, message): void | Promise<void> {
-            //do nothing, radar updates are pushed from the server side
-        },
+        // Radar updates are server-pushed only
+        message() {},
         close(ws, code, reason) {
             console.log(`[websocket] Radar ${ws.data.id} connection closed. Code: ${code} ${reason ? ` - Reason: ${reason}` : ''}`);
         },
     }
 })
 
-console.log('[server] In ascolto su http://localhost:' + env.PORT);
+console.log(`[server] Listening on http://localhost:${env.PORT}`);

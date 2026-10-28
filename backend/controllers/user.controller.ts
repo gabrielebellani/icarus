@@ -1,7 +1,7 @@
 import {jsonResponse} from "../utils/response.util.ts";
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {z} from "zod";
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {ApiRequestTrackingRepository} from "../repositories/apiRequestTracking.repository.ts";
 import {ApiRequestUsage} from "../classes/ApiRequestUsage.ts";
 

@@ -5,7 +5,7 @@ import {FlightawareService} from "../services/flightaware.service.ts";
 import {FlightTrackingRefreshService} from "../services/flightTrackingRefresh.service.ts";
 import {z} from "zod";
 import {addDays, endOfDay, startOfDay, subDays} from "date-fns";
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {TrackedFlight} from "../classes/TrackedFlight.ts";
 import {normalizeFlightPayload} from "../utils/flight.util.ts";
 
@@ -127,15 +127,4 @@ export async function terminateTracking(request: Request){
 
 function stopTracking(userId: number){
     db.prepare("DELETE FROM tracked_flights WHERE user_id = ?").run(userId)
-}
-
-function getTrackedFlight(userId: number): TrackedFlight | null {
-    const row = db.prepare("SELECT * FROM tracked_flights WHERE user_id = ? LIMIT 1")
-        .get(userId)
-
-    if (row) {
-        return TrackedFlight.fromDB(row)
-    } else {
-        return null
-    }
 }

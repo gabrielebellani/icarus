@@ -2,6 +2,15 @@ import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
+export type AdsbLolState = { on_ground: boolean | null, velocity: number | null, altitude: number | null };
+
+const KNOTS_TO_MS = 0.514444;
+const FEET_TO_METERS = 0.3048;
+
+function knotsToMs(knots: number | undefined): number | null {
+    return typeof knots === 'number' ? knots * KNOTS_TO_MS : null;
+}
+
 export class AdsbLolService extends ThirdPartyHttpService {
     override host = 'https://api.adsb.lol/api/'
 
@@ -44,108 +53,40 @@ export class AdsbLolService extends ThirdPartyHttpService {
         return results
     }
 
-    /**
-     * Fetch single aircraft state by registration (callsign).
-     * Tries v2/registration endpoint; returns null on error or aircraft not found.
-     * More reliable than icao24 lookup for live tracking.
-     */
-    public async fetchStateByRegistration(registration: string): Promise<{on_ground: boolean|null, velocity: number|null, altitude: number|null} | null> {
-        try {
-            const endpoint = `v2/registration/${registration.toUpperCase()}`;
-            const response = await this.fetch(endpoint, undefined, 'GET', undefined, true) as Response;
+    /** Live state by registration: more reliable than icao24 for tracking a specific flight. */
+    public fetchStateByRegistration(registration: string): Promise<AdsbLolState | null> {
+        return this.fetchState(`v2/registration/${registration.toUpperCase()}`);
+    }
 
+    public fetchStateByIcao24(icao24: string): Promise<AdsbLolState | null> {
+        return this.fetchState(`v2/icao/${icao24.toLowerCase()}`);
+    }
+
+    /** Reads the first aircraft of a readsb response: { ac: [{ gs (kt), alt_baro (ft | "ground"), on_ground }] }. */
+    private async fetchState(endpoint: string): Promise<AdsbLolState | null> {
+        try {
+            const response = await this.fetch(endpoint, undefined, 'GET', undefined, true) as Response;
             if (!response.ok) {
                 return null;
             }
 
-            let jsonData: any;
-            try {
-                jsonData = await response.json();
-            } catch {
+            const body: any = await response.json();
+            const aircraft = body?.ac?.[0];
+            if (!aircraft) {
                 return null;
             }
 
-            if (!jsonData.ac || jsonData.ac.length === 0) {
-                return null;
+            if (aircraft.alt_baro === 'ground') {
+                return {on_ground: true, velocity: knotsToMs(aircraft.gs), altitude: 0};
             }
-
-            const aircraft = jsonData.ac[0];
-            
-            const velocityKnots = aircraft.gs ?? null;
-            const velocity = velocityKnots !== null ? velocityKnots * 0.514444 : null;
-            
-            let altitude: number | null = null;
-            let onGround: boolean | null = null;
-            
-            if (typeof aircraft.alt_baro === 'string' && aircraft.alt_baro === 'ground') {
-                onGround = true;
-                altitude = 0;
-            } else if (typeof aircraft.alt_baro === 'number') {
-                altitude = aircraft.alt_baro * 0.3048; // ft → m
-                onGround = aircraft.on_ground ?? null;
-            } else {
-                onGround = aircraft.on_ground ?? null;
-            }
-
-            return { on_ground: onGround, velocity, altitude };
+            return {
+                on_ground: aircraft.on_ground ?? null,
+                velocity: knotsToMs(aircraft.gs),
+                altitude: typeof aircraft.alt_baro === 'number' ? aircraft.alt_baro * FEET_TO_METERS : null,
+            };
         } catch (error) {
-            console.error(`[AdsbLolService] Error fetching state for registration ${registration}:`, error);
+            console.error(`[AdsbLolService] Error fetching ${endpoint}:`, error);
             return null;
         }
     }
-
-    /**
-     * Fetch single aircraft state by ICAO24 transponder address.
-     * Tries v2/icao endpoint; returns null on error or aircraft not found.
-     * Expected response shape (tar1090/readsb schema):
-     * { ac: [ { hex, gs (knots), alt_baro (ft or "ground"), on_ground (bool) } ] }
-     */
-    public async fetchStateByIcao24(icao24: string): Promise<{on_ground: boolean|null, velocity: number|null, altitude: number|null} | null> {
-        try {
-            const endpoint = `v2/icao/${icao24.toLowerCase()}`;
-            const response = await this.fetch(endpoint, undefined, 'GET', undefined, true) as Response;
-
-            if (!response.ok) {
-                return null;
-            }
-
-            let jsonData: any;
-            try {
-                jsonData = await response.json();
-            } catch {
-                // Response is not JSON or malformed
-                return null;
-            }
-
-            if (!jsonData.ac || jsonData.ac.length === 0) {
-                return null;
-            }
-
-            const aircraft = jsonData.ac[0];
-            
-            // Parse ground speed (knots) → m/s
-            const velocityKnots = aircraft.gs ?? null;
-            const velocity = velocityKnots !== null ? velocityKnots * 0.514444 : null;
-            
-            // Parse altitude: ft (number) → m, or "ground" string → on_ground=true, altitude=0
-            let altitude: number | null = null;
-            let onGround: boolean | null = null;
-            
-            if (typeof aircraft.alt_baro === 'string' && aircraft.alt_baro === 'ground') {
-                onGround = true;
-                altitude = 0;
-            } else if (typeof aircraft.alt_baro === 'number') {
-                altitude = aircraft.alt_baro * 0.3048; // ft → m
-                onGround = aircraft.on_ground ?? null;
-            } else {
-                onGround = aircraft.on_ground ?? null;
-            }
-
-            return { on_ground: onGround, velocity, altitude };
-        } catch (error) {
-            console.error(`[AdsbLolService] Error fetching state for icao24 ${icao24}:`, error);
-            return null;
-        }
-    }
-
 }

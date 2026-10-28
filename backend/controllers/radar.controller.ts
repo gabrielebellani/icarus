@@ -185,18 +185,20 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
         ws.send(await computeRefresh())
     }
 
-    setInterval(async () => {
-        /* check if radar timeout is reached (delta between now and first refresh).
-        radar inactivity_timeout is in seconds
-         */
-        const delta = new Date().getTime() - date.getTime(); //in ms
-        if (radarInstance.inactivity_timeout && delta > (radarInstance.inactivity_timeout * 1000)) {
+    const timer = setInterval(async () => {
+        if (ws.readyState !== WebSocket.OPEN) {
+            clearInterval(timer);
+            return;
+        }
+
+        // inactivity_timeout is in seconds, measured from the first refresh
+        const elapsedMs = Date.now() - date.getTime();
+        if (radarInstance.inactivity_timeout && elapsedMs > radarInstance.inactivity_timeout * 1000) {
+            clearInterval(timer);
             ws.close(1008, 'Radar timeout');
             return;
         }
 
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(await computeRefresh())
-        }
+        ws.send(await computeRefresh())
     }, radarInstance.refreshIntervalMs);
 }

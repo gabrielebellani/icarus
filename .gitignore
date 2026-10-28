@@ -52,11 +52,16 @@ backend/.idea
 backend/.DS_Store
 
 backend/icarus-db.sqlite
+backend/yaak/yaak.ev_*.yaml
 
 backend/yaak/yaak.fl_YuPmfSxygz.yaml
 backend/yaak/yaak.rq_oGU4SPbCGP.yaml
 backend/yaak/yaak.rq_tCrKUb7Bwv.yaml
 backend/yaak/yaak.rq_AM3JShHLwA.yaml
+
+.env
+.env.*
+!.env.example
 
 .DS_Store
 .idea

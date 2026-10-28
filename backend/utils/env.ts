@@ -16,7 +16,6 @@ export const env = {
     get SUPERUSER_PASSWORD() { return requireEnv('SUPERUSER_PASSWORD'); },
     get JWT_SECRET() { return requireEnv('JWT_SECRET'); },
     get JETAPI_SCRAPER_URL() { return requireEnv('JETAPI_URL'); },
-    get REDIS_URL() { return requireEnv('REDIS_URL'); },
     get FRONTEND_URL() { return optionalEnv('FRONTEND_URL'); },
     get DB_PATH() { return optionalEnv('DB_PATH') || './icarus-db.sqlite'; },
 

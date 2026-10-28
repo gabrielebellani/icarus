@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import type {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
 
 export class ApiRequestTrackingRepository {

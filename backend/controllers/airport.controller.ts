@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {TrackedAirport} from "../classes/TrackedAirport.ts";
 import {authenticate, isAuthError} from "../middleware/auth.ts";
 import {jsonResponse} from "../utils/response.util.ts";

@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {RadarInstance} from "../classes/RadarInstance.ts";
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {AircraftInfo} from "../classes/AircraftInfo.ts";
@@ -51,8 +51,9 @@ export class RadarRepository {
         if (callsigns.length === 0) {
             return [];
         }
-        return db.query('SELECT * FROM cached_routes WHERE callsign IN(?)')
-            .all(callsigns.toString())
+        const placeholders = callsigns.map(() => '?').join(',');
+        return db.query(`SELECT * FROM cached_routes WHERE callsign IN (${placeholders})`)
+            .all(...callsigns)
             .map((row: any) => RadarCommercialFlight.buildFromPersistedRecord(row));
     }
 

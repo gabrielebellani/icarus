@@ -208,6 +208,16 @@ bun run index.ts
 
 Runs on `http://localhost:8921` with local SQLite.
 
+### Testing
+
+Backend tests use Bun's built-in test runner. They run against an in-memory SQLite database and
+mock every third-party provider, so no network access or API key is needed:
+
+```bash
+cd backend
+bun test
+```
+
 ## Architecture breakdown
 
 ```
@@ -295,4 +305,4 @@ Licensed under the [AGPL-3.0 License](LICENSE).
 Contributions welcome! Please open issues and pull requests on GitHub.
 
 ### AI usage note:
-**Did AI generated code in this repository?** Yes, part of the code, mainly on the frontend, is AI generated.
+**Is any code in this repository AI-generated?** Yes, part of the code, mainly on the frontend, is AI generated.

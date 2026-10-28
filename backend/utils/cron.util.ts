@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {subHours, subDays, isBefore, parseISO} from "date-fns";
 
 export function deleteExpiredRadars() {

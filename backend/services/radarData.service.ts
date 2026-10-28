@@ -4,7 +4,7 @@ import {AdsbLolService} from "./adsbLol.service.ts";
 import {FlightawareService} from "./flightaware.service.ts";
 import {AdsbdbService} from "./adsbdb.service.ts";
 import {JetapiScraperService} from "./jetapiScraper.service.ts";
-import {AircraftTypeEnum, DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
+import {DefaultAircraftTypeDisplayPriority} from "../enums/AircraftTypeEnum.ts";
 import {RadarSingleAircraft} from "../classes/RadarSingleAircraft.ts";
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {AircraftInfo} from "../classes/AircraftInfo.ts";
@@ -211,39 +211,23 @@ export class RadarDataService {
     }
 
     /**
-     * Sort adsb aircraft by priority based on type and ascending distance from the radar center coordinates
-     * Note: currently OpenSky does not return the correct aircraft type, it always returns 0 (No Info)
+     * Aircraft inside the radar radius, ordered by type priority and then by distance from the center.
+     * Note: OpenSky's anonymous states endpoint doesn't return the aircraft category, so today every
+     * aircraft is NoInfo and the order is effectively by distance only.
      */
     private static getPrioritizedAircraft(flights: OpenSkyState[], radar: RadarInstance): OpenSkyState[] {
-        const priority = DefaultAircraftTypeDisplayPriority;
-        const prioritizedFlights: OpenSkyState[] = [];
+        const radiusMeters = radar.radius * 1000;
+        const priorityOf = (state: OpenSkyState) => {
+            const index = DefaultAircraftTypeDisplayPriority.indexOf(state.aircraft_type);
+            return index === -1 ? DefaultAircraftTypeDisplayPriority.length : index;
+        };
 
-        for (const aircraftTypeEnum of priority) {
-            const filteredFlights = flights.filter(
-                (flight: OpenSkyState) =>
-                    flight.aircraft_type === aircraftTypeEnum ||
-                    (
-                        flight.aircraft_type > AircraftTypeEnum.Others &&
-                        flight.aircraft_type < AircraftTypeEnum.SpecialTypesMinimum
-                    )
-            );
-            prioritizedFlights.push(...filteredFlights);
+        for (const state of flights) {
+            state.computeDistanceFromRadarCenter(radar.coordinates);
         }
 
-        return prioritizedFlights
-            .map(state => {
-                state.computeDistanceFromRadarCenter(radar.coordinates)
-                return state
-            })
-            .filter(state =>
-                state.distanceFromRadarCenter !== null
-                && state.distanceFromRadarCenter <= (radar.radius * 1000 /* convert to meters */)
-            )
-            .sort((a: OpenSkyState, b: OpenSkyState) => {
-                if (a.distanceFromRadarCenter && b.distanceFromRadarCenter) {
-                    return a.distanceFromRadarCenter - b.distanceFromRadarCenter
-                }
-                return 1
-            })
+        return flights
+            .filter(state => state.distanceFromRadarCenter !== null && state.distanceFromRadarCenter <= radiusMeters)
+            .sort((a, b) => priorityOf(a) - priorityOf(b) || a.distanceFromRadarCenter! - b.distanceFromRadarCenter!);
     }
 }

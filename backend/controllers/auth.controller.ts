@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {db} from '../index.ts';
+import {db} from '../db.ts';
 import {PreferenceKeyEnum} from '../enums/PreferenceKeyEnum.ts';
 import {signAccessToken, signRefreshToken, type TokenPayload, verifyToken} from '../utils/jwt.util.ts';
 import {jsonResponse} from '../utils/response.util.ts';

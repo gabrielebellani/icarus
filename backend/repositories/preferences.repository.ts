@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {Preference} from "../classes/Preference.ts";
 import {AppPreference} from "../classes/AppPreference.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";

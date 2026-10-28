@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {env} from "../utils/env.ts";
 import {jsonResponse} from "../utils/response.util.ts";

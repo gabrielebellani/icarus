@@ -1,4 +1,4 @@
-import {db} from "../index.ts";
+import {db} from "../db.ts";
 
 /**
  * Idempotently add a column to a table if it doesn't already exist.
@@ -21,7 +21,7 @@ function addColumnIfMissing(tableName: string, columnName: string, columnDefinit
 }
 
 export default async function () {
-    const sql = await Bun.file('./migrations/init.sql').text()
+    const sql = await Bun.file(`${import.meta.dir}/init.sql`).text()
     db.run(sql)
     
     // Idempotent schema migrations for existing DBs
