@@ -72,3 +72,4 @@ backend/yaak/yaak.rq_AM3JShHLwA.yaml
 .dockerignore
 
 build.sh
+docker-compose.local.yml
