@@ -22,16 +22,16 @@ There's no need for specific hardware to run Icarus.
 
 ### 📡 Radars
 
-The Radar allow you to see which aircraft are currently in the sky above a given location and inside a given radius.
+The Radar allows you to see which aircraft are currently in the sky above a given location and inside a given radius.
 
 ### 🛬 Flight
 
-Track a flight from the moment it leaves to gate to the moment it arrives, see its speed and realtime altitude and
+Track a flight from the moment it leaves the gate to the moment it lands, see its speed and realtime altitude and
 progress.
 
 ### ✈️ Airports
 
-See your favourite airports arrival and departures on a convenient timetable.
+See your favourite airports arrivals and departures on a convenient timetable.
 
 ### 📊 Usage
 
@@ -40,7 +40,7 @@ Track your usage of third party services in the Preferences section.
 ## Data sources (read carefully):
 
 This project is 100% hobbyist and not meant to be a large-scale production-ready application.
-Data are gathered from third party services that are free and open source or have a free tier.
+Data are gathered from third party services that are free and open source or that have a free tier.
 - FlightAware (https://flightaware.com/)
 - OpenSky (https://opensky.org/)
 - ADSB.lol (https://adsb.lol/)
@@ -51,7 +51,7 @@ Data are gathered from third party services that are free and open source or hav
 FlightAware is the most reliable source of information used by this project. 
 It requires an API key to access their data. **Each Icarus user account** must register a FlightAware account and get its own API key.
 
-FlightAware API are not free but currently (as of July 2026) it offers a $5 monthly credit. For a single user, this should be more than enough.
+FlightAware API are not free but currently (as of October 2026) it offers a $5 monthly credit. For a single user, this should be more than enough.
 For this reason Icarus uses FlightAware API as last resort or with a heavy rate limiter.
 In the Preferences you can set the API key and track the usage.
 
@@ -74,9 +74,9 @@ however it didn't offer an easy way to integrate it, so I Dockerized it (https:/
 It doesn't require an API key, and it's free to use.
 
 ### Note on third party services usage and data accuracy
-Icarus infers itself a quite strict rate limiter on third party calls, the reason is to prevent being banned by the third party services and to ensure that their servers are not overloaded.
+Icarus infers itself a quite strict rate limit on third party calls, the reason is to prevent being banned by the third party services and to ensure that their servers are not overloaded.
 
-Data accuracy is not guaranteed, this services are not always 100% accurate, and Icarus cannot be held responsible for any data inaccuracies. 
+Data accuracy is not guaranteed, these services are not always 100% accurate, and Icarus cannot be held responsible for any data inaccuracies. 
 Sometimes, if you compare displayed information with FlightRadar24 or other (paid) similar services, you may notice discrepancies.
 
 _Note:_ if you want to add other data sources, please open an issue or a pull request.
@@ -95,7 +95,7 @@ _Note:_ if you want to add other data sources, please open an issue or a pull re
    cd icarus
    ```
 
-2. **Create `.env` file from the example**:
+2. **Copy `.env` file from the example**:
    ```bash
    cp .env.example .env
    ```
@@ -186,7 +186,7 @@ ICARUS_JWT_SECRET=your-jwt-secret-here-min-32-chars
 
 ### Local Development Setup
 
-For development, you'll need Node.js/Bun and can use the local dev environment without Docker:
+For development, you'll need Node.js/Bun and you can also use the local dev environment without Docker:
 
 **Frontend**:
 
@@ -288,6 +288,7 @@ icarus/
 - Keep Docker images updated regularly
 
 ## Roadmap/improvements ideas
+- [ ] third party services status diagram
 - [ ] add support for ADS-B antennas
 - [ ] admin can create user's accounts and send them an invitation
 - [ ] shared admin third parties API keys
@@ -303,6 +304,3 @@ Licensed under the [AGPL-3.0 License](LICENSE).
 ## Contributing
 
 Contributions welcome! Please open issues and pull requests on GitHub.
-
-### AI usage note:
-**Is any code in this repository AI-generated?** Yes, part of the code, mainly on the frontend, is AI generated.

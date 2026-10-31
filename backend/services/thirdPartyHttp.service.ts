@@ -42,7 +42,6 @@ export class ThirdPartyHttpService {
         }
 
         return {
-            // Error pages (e.g. a 502 from a proxy) are often not JSON
             content: await response.json().catch(() => null),
             status: response.status,
             ok: response.ok

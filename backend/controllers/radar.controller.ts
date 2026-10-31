@@ -193,7 +193,7 @@ export async function refreshRadar(radarId: string, ws: ServerWebSocket<any>) {
 
         // inactivity_timeout is in seconds, measured from the first refresh
         const elapsedMs = Date.now() - date.getTime();
-        if (radarInstance.inactivity_timeout && elapsedMs > radarInstance.inactivity_timeout * 1000) {
+        if (radarInstance.inactivity_timeout && elapsedMs > radarInstance.inactivityTimeoutMs!) {
             clearInterval(timer);
             ws.close(1008, 'Radar timeout');
             return;

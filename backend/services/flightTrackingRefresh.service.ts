@@ -12,17 +12,21 @@ import {ThirdPartyQuotaExceededError} from '../errors/ThirdPartyQuotaExceededErr
 type FlightPhase = 'ground' | 'airborne' | 'completed';
 type DataSource = 'flightaware' | 'adsb.lol' | 'opensky' | null;
 
-// Normal cheap ADS-B polling cadence. Stays constant during final approach too —
+// Normal cheap ADS-B polling cadence. Stays constant during final approach too
 // only the (expensive) FlightAware cadence changes there.
 const ADSB_POLL_INTERVAL_MS = 60 * 1000; // 60 sec
+
 // Fallback cadence used both for registration retry AND for FlightAware calls
-// while in degraded mode (ADS-B sources unavailable) — keeps costly calls rare.
+// while in degraded mode (ADS-B sources unavailable)
 const FLIGHTAWARE_RETRY_INTERVAL_MS = 5 * 60 * 1000; // 5 min
+
 // Final approach interval: when progress >= 90%, call FlightAware every 5 min for precision
 // (on top of the ADS-B calls, which keep happening every ADSB_POLL_INTERVAL_MS).
 const FINAL_APPROACH_INTERVAL_MS = 5 * 60 * 1000; // 5 min
+
 // Once progress reaches this threshold, call FlightAware on every poll regardless of cadence.
-const FINAL_APPROACH_PRECISION_PROGRESS = 95;
+const FINAL_APPROACH_PRECISION_PROGRESS = 97;
+
 // 5 minutes before estimated landing, trigger a FlightAware call
 const FINAL_APPROACH_WINDOW_MS = 5 * 60 * 1000; // 5 min
 
@@ -135,7 +139,7 @@ export class FlightTrackingRefreshService {
 
     /**
      * Double-check if aircraft is airborne.
-     * Signal: on_ground === false AND velocity > 35 m/s (≈68 kt) AND altitude > 100 m
+     * Signal: on_ground === false AND velocity > 35 m/s (~68 kt) AND altitude > 100 m
      */
     static isAirborne(state: AdsbLolState): boolean {
         if (state.on_ground === true) return false;
@@ -335,7 +339,7 @@ export class FlightTrackingRefreshService {
                     console.log(
                         `[FlightTrackingRefreshService] Takeoff detected for user ${userId}; refreshing FlightAware`
                     );
-                    const updatedPayload = await this.fetchLatestFlightInfo(payload, userId);
+                    const updatedPayload = await this.fetchLatestFlightInfoFromFlightAware(payload, userId);
                     if (updatedPayload) {
                         payload = normalizeFlightPayload(updatedPayload, now);
                         phase = 'airborne';
@@ -348,7 +352,7 @@ export class FlightTrackingRefreshService {
                     console.log(
                         `[FlightTrackingRefreshService] Landing detected for user ${userId}; refreshing FlightAware`
                     );
-                    const updatedPayload = await this.fetchLatestFlightInfo(payload, userId);
+                    const updatedPayload = await this.fetchLatestFlightInfoFromFlightAware(payload, userId);
                     if (updatedPayload) {
                         payload = normalizeFlightPayload(updatedPayload, now);
                         phase = 'completed';
@@ -357,7 +361,7 @@ export class FlightTrackingRefreshService {
                     }
                 }
                 // Final approach: ADS-B keeps polling every minute (above), but also call
-                // FlightAware on its own 5 min cadence — sooner if progress hits 95% or
+                // FlightAware on its own 5 min cadence — sooner if progress hits 97% or
                 // any ADS-B source reports the aircraft on the ground.
                 else if (inFinalApproach && phase === 'airborne') {
                     const onGroundSignal = adsbResult.state.on_ground === true;
@@ -371,7 +375,7 @@ export class FlightTrackingRefreshService {
                         console.log(
                             `[FlightTrackingRefreshService] Final approach: calling FlightAware for user ${userId}`
                         );
-                        const updatedPayload = await this.fetchLatestFlightInfo(payload, userId);
+                        const updatedPayload = await this.fetchLatestFlightInfoFromFlightAware(payload, userId);
                         if (updatedPayload) {
                             payload = normalizeFlightPayload(updatedPayload, now);
                             last_flightaware_at = now;
@@ -397,7 +401,7 @@ export class FlightTrackingRefreshService {
                     console.log(
                         `[FlightTrackingRefreshService] ADS-B sources unavailable for user ${userId}; falling back to FlightAware (degraded mode)`
                     );
-                    const updatedPayload = await this.fetchLatestFlightInfo(payload, userId);
+                    const updatedPayload = await this.fetchLatestFlightInfoFromFlightAware(payload, userId);
                     if (updatedPayload) {
                         payload = normalizeFlightPayload(updatedPayload, now);
                         phase = this.deriveInitialPhase(payload);
@@ -437,10 +441,10 @@ export class FlightTrackingRefreshService {
     }
 
     /**
-     * Helper: fetch latest flight info from FlightAware and merge into existing payload.
+     * Fetches latest flight info from FlightAware and merge into existing payload.
      * Returns updated payload or null if fetch fails.
      */
-    private static async fetchLatestFlightInfo(currentPayload: any, userId: number): Promise<any | null> {
+    private static async fetchLatestFlightInfoFromFlightAware(currentPayload: any, userId: number): Promise<any | null> {
         try {
             const flightAwareKey = getFlightawareKey(userId);
             if (!flightAwareKey) return null;

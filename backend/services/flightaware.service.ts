@@ -6,7 +6,7 @@ import {PreferencesRepository} from "../repositories/preferences.repository.ts";
 import {PreferenceKeyEnum} from "../enums/PreferenceKeyEnum.ts";
 import {ThirdPartyQuotaExceededError} from "../errors/ThirdPartyQuotaExceededError.ts";
 
-// FlightAware's AeroAPI offers $5 of free credit per month; leave a small margin before blocking.
+// FlightAware's AeroAPI offers $5 of free credit per month; leaves a small margin before blocking.
 const MONTHLY_FREE_CREDIT_USD = 5;
 const BLOCK_THRESHOLD_USD = 4.9;
 // Real cost is only known on demand (account/usage), so it's only re-checked periodically.
@@ -41,11 +41,12 @@ export class FlightawareService extends ThirdPartyHttpService {
     }
 
     /**
-     * Blocks FlightAware calls once the monthly free credit is close to exhausted.
-     * Every USAGE_CHECK_INTERVAL requests it re-checks the real cost via account/usage
-     * (FlightAware doesn't push usage in real time); once cost reaches BLOCK_THRESHOLD_USD it
-     * blocks further calls for the rest of the month unless the user opted to exceed the limit.
-     * fetchUsage() itself is exempt so the user can always see current cost to make that call.
+     * Blocks FlightAware calls when the monthly free credit is almost exhausted.
+     * Every USAGE_CHECK_INTERVAL requests we re-check the real usage from FlightAware's
+     * account/usage endpoint, since usage is not pushed in real time. If the cost reaches
+     * BLOCK_THRESHOLD_USD, we reject further calls for the rest of the month unless the user
+     * explicitly allows over-limit requests. fetchUsage() is excluded from this check so the
+     * user can always see the current cost.
      */
     private async enforceMonthlyBudget(): Promise<void> {
         if (PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT, this.userId)?.value === true) {
@@ -61,12 +62,12 @@ export class FlightawareService extends ThirdPartyHttpService {
         const today = formatISO(new Date(), {representation: 'date'});
         const requestsThisMonth = ApiRequestTrackingRepository.getRequestCount(ThirdPartyServiceEnum.FLIGHTAWARE, this.userId, monthStart, today);
 
-        // Cursor-based (not modulo-based) so fetchUsage()'s own tracked request doesn't
-        // shift the cadence, and so concurrent calls can't both see the same boundary:
-        // this is set synchronously, before the await below, closing the race window.
-        // The cursor is scoped to a month: a cursor left over from a previous month can
-        // land on the same count as this month's (both hit the same round numbers), so
-        // magnitude alone can't tell "already checked this month" from "stale" apart.
+        // We keep a month-scoped request cursor rather than a simple modulo counter.
+        // This avoids two problems: fetchUsage()'s own tracked request changing the cadence,
+        // and concurrent requests both deciding they are at the same check boundary.
+        // We update the cursor immediately, before the async usage call, so the race window is closed.
+        // We also compare the stored month together with the stored count, because a stale value
+        // from a previous month can otherwise look identical to the current month's value.
         const checkedAtMonth = PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_MONTH, this.userId)?.value;
         const storedCheckedAtCount = PreferencesRepository.getPreference(PreferenceKeyEnum.FLIGHTAWARE_USAGE_CHECKED_AT_COUNT, this.userId)?.value ?? 0;
         const checkedAtCount = checkedAtMonth === currentMonth ? storedCheckedAtCount : 0;

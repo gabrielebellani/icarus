@@ -1,15 +1,9 @@
 import {RadarCommercialFlight} from "../classes/RadarCommercialFlight.ts";
 import {ThirdPartyHttpService} from "./thirdPartyHttp.service.ts";
 import {ThirdPartyServiceEnum} from "../enums/ThirdPartyServiceEnum.ts";
+import {feetToMeters, knotsToMs} from "../utils/measurements.ts";
 
 export type AdsbLolState = { on_ground: boolean | null, velocity: number | null, altitude: number | null };
-
-const KNOTS_TO_MS = 0.514444;
-const FEET_TO_METERS = 0.3048;
-
-function knotsToMs(knots: number | undefined): number | null {
-    return typeof knots === 'number' ? knots * KNOTS_TO_MS : null;
-}
 
 export class AdsbLolService extends ThirdPartyHttpService {
     override host = 'https://api.adsb.lol/api/'
@@ -53,7 +47,7 @@ export class AdsbLolService extends ThirdPartyHttpService {
         return results
     }
 
-    /** Live state by registration: more reliable than icao24 for tracking a specific flight. */
+    /** Fetch state by registration: more reliable than icao24 for tracking a live flight. */
     public fetchStateByRegistration(registration: string): Promise<AdsbLolState | null> {
         return this.fetchState(`v2/registration/${registration.toUpperCase()}`);
     }
@@ -62,7 +56,12 @@ export class AdsbLolService extends ThirdPartyHttpService {
         return this.fetchState(`v2/icao/${icao24.toLowerCase()}`);
     }
 
-    /** Reads the first aircraft of a readsb response: { ac: [{ gs (kt), alt_baro (ft | "ground"), on_ground }] }. */
+    /**
+     * Fetch single aircraft state by ICAO24 transponder address or registration.
+     * Returns null on error or aircraft not found.
+     * Expected response shape (tar1090/readsb schema) from the third party:
+     * { ac: [ { hex, gs (knots), alt_baro (ft or "ground"), on_ground (bool) } ] }
+     */
     private async fetchState(endpoint: string): Promise<AdsbLolState | null> {
         try {
             const response = await this.fetch(endpoint, undefined, 'GET', undefined, true) as Response;
@@ -77,12 +76,17 @@ export class AdsbLolService extends ThirdPartyHttpService {
             }
 
             if (aircraft.alt_baro === 'ground') {
-                return {on_ground: true, velocity: knotsToMs(aircraft.gs), altitude: 0};
+                return {
+                    on_ground: true,
+                    velocity: knotsToMs(aircraft.gs),
+                    altitude: 0
+                };
             }
+
             return {
                 on_ground: aircraft.on_ground ?? null,
                 velocity: knotsToMs(aircraft.gs),
-                altitude: typeof aircraft.alt_baro === 'number' ? aircraft.alt_baro * FEET_TO_METERS : null,
+                altitude: feetToMeters(aircraft.alt_baro),
             };
         } catch (error) {
             console.error(`[AdsbLolService] Error fetching ${endpoint}:`, error);
