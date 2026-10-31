@@ -123,7 +123,7 @@ _Note:_ if you want to add other data sources, please open an issue or a pull re
 | `FRONTEND_URL`         | No       | `http://localhost:8920`      | Public URL for password recovery messages   |
 | `FRONTEND_PORT`        | No       | `8920`                       | Port to expose the frontend on the host     |
 | `DB_PATH`              | No       | `/app/data/icarus-db.sqlite` | Path to the SQLite database                 |
-| `DISABLE_REGISTRATION` | No       | `true`                       | Disable user registration                   |
+| `DISABLE_REGISTRATION` | No       | `true`                       | Set to `false` to allow user registration   |
 | `SMTP_HOST`            | No       | -                            | SMTP server host for password recovery emails |
 | `SMTP_PORT`            | No       | -                            | SMTP server port                            |
 | `SMTP_SECURE`          | No       | `false`                      | Use TLS for the SMTP connection             |
@@ -253,7 +253,8 @@ icarus/
 │   │   ├── types/          # TypeScript types
 │   │   ├── views/          # Page components
 │   │   └── router/         # Vue Router config
-│   Dockerfile          # Multi-stage build (bun + Caddy)
+│   ├── docs/               # Frontend notes
+│   ├── Dockerfile          # Multi-stage build (bun + Caddy)
 │   └── docker/
 │       └── Caddyfile       # Reverse proxy config
 │
@@ -264,9 +265,9 @@ icarus/
 │   ├── middleware/         # Auth & request processing
 │   ├── migrations/         # Database schema
 │   ├── utils/              # Helpers (env, jwt, email, etc.)
+│   ├── tests/              # bun test suites
 │   ├── Dockerfile          # Production image
-│   └── src/
-│       └── index.ts        # Server entry point
+│   └── index.ts            # Server entry point
 │
 ├── docker-compose.yml      # Production orchestration
 ├── .env.example            # Configuration template

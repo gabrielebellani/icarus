@@ -58,10 +58,9 @@ export async function bootstrapSuperuser(): Promise<void> {
 }
 
 export function getApplicationPublicConfig(request: Request){
-    const registrationDisabledPref = PreferencesRepository.getAppPreference(PreferenceKeyEnum.DISABLE_REGISTRATION)
     const passwordRecoveryAvailable = PreferencesRepository.getAppPreference(PreferenceKeyEnum.PASSWORD_RECOVERY_AVAILABLE)
     return jsonResponse({
-        "registration_disabled": registrationDisabledPref ? registrationDisabledPref.value as boolean : false,
+        "registration_disabled": env.DISABLE_REGISTRATION,
         "password_recovery_available": passwordRecoveryAvailable ? passwordRecoveryAvailable.value as boolean : false
     })
 }

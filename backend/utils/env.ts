@@ -18,6 +18,8 @@ export const env = {
     get JETAPI_SCRAPER_URL() { return requireEnv('JETAPI_URL'); },
     get FRONTEND_URL() { return optionalEnv('FRONTEND_URL'); },
     get DB_PATH() { return optionalEnv('DB_PATH') || './icarus-db.sqlite'; },
+    // Closed unless explicitly opened
+    get DISABLE_REGISTRATION() { return optionalEnv('DISABLE_REGISTRATION') !== 'false'; },
 
     // SMTP (optional)
     get SMTP_HOST() { return optionalEnv('SMTP_HOST'); },

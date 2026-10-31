@@ -43,9 +43,7 @@ export async function registerUser(request: Request): Promise<Response> {
     }
     const { username, password, email } = parsed.data;
 
-    // Check if registration is disabled (superuser preference, user_id=1)
-    const disabledPref = PreferencesRepository.getPreference(PreferenceKeyEnum.DISABLE_REGISTRATION, 1)
-    if (disabledPref !== null && disabledPref.value) {
+    if (env.DISABLE_REGISTRATION) {
         return jsonResponse({ error: 'Registration is disabled' }, 403);
     }
 

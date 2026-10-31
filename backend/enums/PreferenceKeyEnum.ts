@@ -1,5 +1,4 @@
 export enum PreferenceKeyEnum {
-    DISABLE_REGISTRATION = 'disable_registration',
     FLIGHTAWARE_API_KEY = 'flightaware_api_key',
     FLIGHTAWARE_ALLOW_OVER_LIMIT = 'flightaware_allow_over_limit',
     FLIGHTAWARE_LIMIT_REACHED_MONTH = 'flightaware_limit_reached_month',
@@ -16,7 +15,6 @@ export enum PreferenceKeyEnum {
 import {PreferenceTypeEnum} from './PreferenceTypeEnum.ts';
 
 export const PreferenceKeyToType: Record<PreferenceKeyEnum, PreferenceTypeEnum> = {
-    [PreferenceKeyEnum.DISABLE_REGISTRATION]: PreferenceTypeEnum.BOOLEAN,
     [PreferenceKeyEnum.FLIGHTAWARE_API_KEY]: PreferenceTypeEnum.STRING,
     [PreferenceKeyEnum.FLIGHTAWARE_ALLOW_OVER_LIMIT]: PreferenceTypeEnum.BOOLEAN,
     [PreferenceKeyEnum.FLIGHTAWARE_LIMIT_REACHED_MONTH]: PreferenceTypeEnum.STRING,

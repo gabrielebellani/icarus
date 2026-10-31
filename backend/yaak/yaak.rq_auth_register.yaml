@@ -15,7 +15,7 @@ body:
       "password": "MySecurePassword123!",
     }
 bodyType: application/json
-description: "Register a new user. Returns access_token and refresh_token. \nReturns 403 if env disable_registration is true.\nReturns 409 if provided username already exists."
+description: "Register a new user. Returns access_token and refresh_token. \nReturns 403 if env DISABLE_REGISTRATION is not false.\nReturns 409 if provided username already exists."
 headers:
 - enabled: true
   name: Content-Type

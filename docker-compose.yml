@@ -21,10 +21,10 @@ services:
       SUPERUSER_USERNAME: ${SUPERUSER_USERNAME}
       SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      REDIS_URL: redis://redis-cache:6379
       JETAPI_URL: http://jetapi-scraper:8922
       FRONTEND_URL: ${FRONTEND_URL}
       DB_PATH: /app/data/icarus-db.sqlite
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_SECURE: ${SMTP_SECURE}
@@ -34,7 +34,6 @@ services:
     volumes:
       - backend-data:/app/data
     depends_on:
-      - redis-cache
       - jetapi-scraper
     networks:
       - icarus
@@ -51,19 +50,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Redis cache for sessions and temporary data
-  redis-cache:
-    image: redis:8-alpine
-    container_name: icarus-redis
-    networks:
-      - icarus
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-
   # External service: aircraft image and information scraper
   jetapi-scraper:
-    image: ghcr.io/gabrielebellani/jetapi_scarper_docker:1.0.0
+    image: ghcr.io/gabrielebellani/jetapi_scraper_docker:latest
     container_name: icarus-jetapi
     networks:
       - icarus
@@ -71,8 +60,6 @@ services:
 
 volumes:
   backend-data:
-    driver: local
-  redis-data:
     driver: local
 
 networks:
