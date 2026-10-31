@@ -137,14 +137,16 @@ _Note:_ if you want to add other data sources, please open an issue or a pull re
 ## Installation (integrate in existing Docker Compose setup)
 
 If you already run other services with Docker Compose, you can integrate Icarus by adding these services to your
-existing `docker-compose.yml`:
+existing `docker-compose.yml`. Keep the `icarus-backend` service name: the frontend's Caddy proxies `/api` to
+`icarus-backend:8921`. The scraper only needs to be reachable by the backend, so it can stay on a private network.
 
 ```yaml
 services:
   icarus-frontend:
     image: ghcr.io/gabrielebellani/icarus-frontend:latest
+    restart: unless-stopped
     ports:
-      - "8920:8920"
+      - "8920:80"
     depends_on:
       icarus-backend:
         condition: service_healthy
@@ -153,26 +155,48 @@ services:
 
   icarus-backend:
     image: ghcr.io/gabrielebellani/icarus-backend:latest
+    restart: unless-stopped
     environment:
       PORT: "8921"
       SUPERUSER_USERNAME: admin
       SUPERUSER_PASSWORD: ${ICARUS_PASSWORD}
       JWT_SECRET: ${ICARUS_JWT_SECRET}
-      JETAPI_URL: http://jetapi:8922
+      JETAPI_URL: http://jetapi-scraper:8922
+      FRONTEND_URL: ${FRONTEND_URL}
       DB_PATH: /app/data/icarus-db.sqlite
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-true}
+      # Optional, enables password recovery (see Environment Variables)
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
     volumes:
-      - icarus-db:/app/data
+      - ./data/icarus:/app/data
     depends_on:
-      - jetapi
+      - jetapi-scraper
     networks:
       - your-network
+      - icarus-private
+    # Required by the frontend's `condition: service_healthy`
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8921/api/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
-volumes:
-  icarus-db:
+  jetapi-scraper:
+    image: ghcr.io/gabrielebellani/jetapi_scraper_docker:latest
+    restart: unless-stopped
+    networks:
+      - icarus-private
 
 networks:
   your-network:
     external: true
+  icarus-private:
 ```
 
 Then update your `.env`:
@@ -180,6 +204,7 @@ Then update your `.env`:
 ```bash
 ICARUS_PASSWORD=your-secure-password-here
 ICARUS_JWT_SECRET=your-jwt-secret-here-min-32-chars
+FRONTEND_URL=https://icarus.example.com
 ```
 
 ## Development

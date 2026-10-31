@@ -1,19 +1,19 @@
 services:
-  # Frontend: SPA served via Caddy, reverse-proxying /api to backend
-  frontend:
+  # Frontend: SPA served via Caddy, reverse-proxying /api to icarus-backend
+  icarus-frontend:
     image: ghcr.io/gabrielebellani/icarus-frontend:latest
     container_name: icarus-frontend
     ports:
       - "${FRONTEND_PORT:-8920}:80"
     depends_on:
-      backend:
+      icarus-backend:
         condition: service_healthy
     networks:
       - icarus
     restart: unless-stopped
 
   # Backend: API server and WebSocket handler
-  backend:
+  icarus-backend:
     image: ghcr.io/gabrielebellani/icarus-backend:latest
     container_name: icarus-backend
     environment:
