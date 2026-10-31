@@ -1,0 +1,94 @@
+name: Docker Image Build CI
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: ["*.*.*"]
+
+jobs:
+
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+    - uses: actions/checkout@v7
+    - name: "[Backend] Setup Bun"
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1
+          
+    - name: "[Backend] Install deps"
+      run: bun install --frozen-lockfile
+
+    - name: "[Backend] Run tests"
+      run: bun test
+
+  backend-build:
+    runs-on: ubuntu-latest
+    needs: backend-test
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - uses: actions/checkout@v7
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ghcr.io/gabrielebellani/icarus-backend
+        tags: |
+          type=sha
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+    
+    - name: Build the Docker image for backend
+      uses: docker/build-push-action@v7
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    needs: backend-test
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - uses: actions/checkout@v7
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ghcr.io/gabrielebellani/icarus-frontend
+        tags: |
+          type=sha
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+    
+    - name: Build the Docker image for frontend
+      uses: docker/build-push-action@v7
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
