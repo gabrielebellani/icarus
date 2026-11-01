@@ -78,7 +78,7 @@ export async function userRequiresInit(request: Request): Promise<Response> {
 
 const initUserSchema = z.object({
     openSkyNetworkKey: z.string().optional(),
-    flightAwareKey: z.string().optional(),
+    flightawareApiKey: z.string().optional(),
 });
 
 export async function initUser(request: Request): Promise<Response> {
@@ -100,13 +100,13 @@ export async function initUser(request: Request): Promise<Response> {
         return jsonResponse({ error: 'User already initialized' }, 409);
     }
 
-    const { openSkyNetworkKey, flightAwareKey } = parsed.data;
+    const { openSkyNetworkKey, flightawareApiKey } = parsed.data;
     const openSkyNetworkKeyIsSet = !!(openSkyNetworkKey && openSkyNetworkKey.length > 0)
 
     const preferencesToInsert: [number, string, string | number | null][] = [
         [userId, PreferenceKeyEnum.OPEN_SKY_API_KEY, openSkyNetworkKeyIsSet ? openSkyNetworkKey : null],
         [userId, PreferenceKeyEnum.OPEN_SKY_DAILY_THRESHOLD, openSkyNetworkKeyIsSet ? 4000 : 400],
-        [userId, PreferenceKeyEnum.FLIGHTAWARE_API_KEY, flightAwareKey ? flightAwareKey.length > 0 ? flightAwareKey : null : null],
+        [userId, PreferenceKeyEnum.FLIGHTAWARE_API_KEY, flightawareApiKey || null],
         [userId, PreferenceKeyEnum.INITIALIZED, 'true'],
     ];
 

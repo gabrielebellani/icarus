@@ -4,6 +4,7 @@ import {z} from "zod";
 import {db} from "../db.ts";
 import {ApiRequestTrackingRepository} from "../repositories/apiRequestTracking.repository.ts";
 import {ApiRequestUsage} from "../classes/ApiRequestUsage.ts";
+import {env} from "../utils/env.ts";
 
 const changePasswordSchema = z.object({
     current_password: z.string(),
@@ -81,6 +82,13 @@ export async function deleteAccount(request: Request) {
     if (isAuthError(auth)) return auth;
 
     const userId = auth.user_id;
+    const user = db
+        .prepare('SELECT username FROM users WHERE id = ?')
+        .get(auth.user_id) as { username: string } | null;
+
+    if(env.SUPERUSER_USERNAME === user?.username){
+        return jsonResponse({message: 'Cannot delete the \'superuser\' account'}, 400)
+    }
 
     try {
         await db.transaction(async () => {
