@@ -23,16 +23,7 @@ bun install
 
 Questo installa tutte le dipendenze definite in `package.json` nella cartella `node_modules`.
 
-3. **Setup environment variables**:
-```bash
-cp .env.local.example .env.local
-```
-
-Modifica `.env.local` con le tue configurazioni locali:
-```env
-VITE_API_URL=http://localhost:3000
-VITE_WS_URL=ws://localhost:3001
-```
+3. **Backend**: avvia il backend su `:8921`. Il dev server di Vite inoltra `/api` (HTTP e WebSocket) al backend; host e porta si cambiano con `ICARUS_API_HOST` / `ICARUS_API_PORT`.
 
 ### Development Server
 
@@ -131,43 +122,9 @@ import { useLogout } from './src/composables/useLogout'
 
 ## Environment Variables
 
-### Development (`.env.local`)
-
-```env
-# API Configuration
-VITE_API_URL=http://localhost:3000
-VITE_WS_URL=ws://localhost:3001
-
-# Optionals
-VITE_DEBUG=true
-VITE_MOCK_API=false
-```
-
-### Production (`.env.production`)
-
-```env
-# API Configuration
-VITE_API_URL=https://api.icarus.example.com
-VITE_WS_URL=wss://ws.icarus.example.com
-
-# Optionals
-VITE_DEBUG=false
-VITE_MOCK_API=false
-```
-
-### Accesso in Codice
-
-```typescript
-const apiUrl = import.meta.env.VITE_API_URL
-
-if (import.meta.env.DEV) {
-  console.log('Development mode')
-}
-
-if (import.meta.env.PROD) {
-  console.log('Production mode')
-}
-```
+Il frontend non usa variabili d'ambiente: il client chiama sempre `/api` sullo stesso origin.
+- **Dev**: il proxy di Vite (`vite.config.ts`) inoltra `/api` al backend.
+- **Produzione**: Caddy (`docker/Caddyfile`) inoltra `/api/*` al container `icarus-backend`.
 
 ## Package Manager Commands
 
@@ -218,10 +175,7 @@ bunx <command>
    Publish Directory: dist
    ```
 
-3. **Environment Variables**:
-   - Aggiungi `VITE_API_URL`, `VITE_WS_URL`
-
-4. **Deploy**:
+3. **Deploy**:
    - Netlify deploya automaticamente su push a main
 
 ### Opzione 2: Vercel
@@ -449,13 +403,7 @@ bun run preview
 # Verifica funzionalità nel browser
 ```
 
-### 3. Environment Separation
-
-- `.env` - Valori di default
-- `.env.local` - Development (gitignored)
-- `.env.production` - Production variables
-
-### 4. Monitor Bundle Size
+### 3. Monitor Bundle Size
 
 Monitora il bundle size ad ogni release:
 
@@ -468,7 +416,7 @@ ls -lh dist/assets/*.js
 
 Mantieni bundle sotto 500KB gzipped.
 
-### 5. Source Maps in Production (Cauto)
+### 4. Source Maps in Production (Cauto)
 
 ```typescript
 // vite.config.ts
@@ -479,7 +427,7 @@ export default {
 }
 ```
 
-### 6. Security Headers
+### 5. Security Headers
 
 Aggiungi security headers nel web server:
 

@@ -33,7 +33,7 @@ export async function request<T>(
   options?: RequestInit
 ): Promise<T> {
   const auth = useAuthStore()
-  const url = `${import.meta.env.VITE_API_URL}${path}`
+  const url = `${API_BASE}${path}` // API_BASE = '/api'
   
   // 1. Aggiungi Authorization header
   const headers = new Headers(options?.headers || {})
@@ -494,23 +494,7 @@ const result = await withRetry(() => getFlightData())
 
 ## Environment Configuration
 
-### `.env` (Development)
-```
-VITE_API_URL=http://localhost:3000
-VITE_WS_URL=ws://localhost:3001
-```
-
-### `.env.production` (Production)
-```
-VITE_API_URL=https://api.icarus.example.com
-VITE_WS_URL=wss://ws.icarus.example.com
-```
-
-### Utilizzo
-```typescript
-const apiUrl = import.meta.env.VITE_API_URL
-const wsUrl = import.meta.env.VITE_WS_URL
-```
+Nessuna variabile d'ambiente: `API_BASE` è `/api` (same-origin). In dev lo inoltra il proxy di Vite, in produzione Caddy. Il WebSocket deriva da `window.location` (`getWsUrl`).
 
 ## Best Practices
 

@@ -23,7 +23,8 @@ let getRefreshToken: (() => string | null) | null = null
 let onRefreshSuccess: ((tokens: { access_token: string; refresh_token: string }) => void) | null = null
 let onAuthFailure: (() => void) | null = null
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
+// Same-origin: Caddy (prod) and the Vite dev proxy both forward /api to the backend.
+const API_BASE = '/api'
 
 console.log('[API Client] Initialized with API_BASE:', API_BASE)
 
@@ -128,38 +129,12 @@ export function getAccessTokenValue(): string | null {
 }
 
 /**
- * Build a WebSocket URL by converting the API base URL scheme.
- * Converts http:// → ws:// and https:// → wss://.
- * Handles both absolute URLs (http://...) and relative paths (/api).
- * Path should start with / (e.g., "/radar/open/123").
+ * Build a same-origin WebSocket URL (Caddy / Vite proxy forward /api to the backend).
+ * Path should start with / (e.g., "/api/radar/open/123").
  */
 export function getWsUrl(path: string): string {
-  if (!API_BASE) {
-    const err = 'API_BASE is not configured'
-    console.error('[getWsUrl]', err)
-    throw new Error(err)
-  }
-
-  let wsBase: string
-
-  // If API_BASE is absolute (e.g., "http://localhost:3000"), convert to ws://
-  if (API_BASE.startsWith('http://') || API_BASE.startsWith('https://')) {
-    wsBase = API_BASE.replace(/^https?:/, (match: string) => {
-      const replacement = match === 'https:' ? 'wss:' : 'ws:'
-      console.debug(`[getWsUrl] Converted "${match}" → "${replacement}"`)
-      return replacement
-    })
-  } else if (API_BASE.startsWith('/')) {
-    // If API_BASE is relative (e.g., "/api"), use same origin as the frontend
-    // This works when behind a reverse proxy (Caddy) that proxies /api to the backend
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    wsBase = `${protocol}//${window.location.host}`
-    console.debug('[getWsUrl] API_BASE is relative, using same origin:', wsBase)
-  } else {
-    const err = `Invalid API_BASE format: ${API_BASE}`
-    console.error('[getWsUrl]', err)
-    throw new Error(err)
-  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsBase = `${protocol}//${window.location.host}`
 
   const fullUrl = `${wsBase}${path}`
   console.log(`[getWsUrl] Full WebSocket URL: ${fullUrl.replace(/token=[^&]*/, 'token=***')}`)

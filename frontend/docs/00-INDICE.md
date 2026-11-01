@@ -54,7 +54,6 @@ Questa documentazione fornisce una guida completa all'architettura, la struttura
 10. **[10-BUILD-DEPLOY.md](./10-BUILD-DEPLOY.md)** - Build e deployment
     - Setup locale
     - Build process
-    - Environment variables
 
 ### Quick Start
 

@@ -268,8 +268,6 @@ docs/
 - **components.json** - Config shadcn-vue (quali componenti sono installati)
 - **index.html** - HTML template per Vite
 - **bun.lock** - Lock file Bun (come package-lock.json per npm)
-- **.env** - Variabili ambiente (dev)
-- **.env.production** - Variabili ambiente (production)
 - **.gitignore** - File ignorati da git
 - **README.md** - Readme progetto
 - **.github/instructions/** - Custom instructions per Copilot AI
